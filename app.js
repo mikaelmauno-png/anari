@@ -18,10 +18,11 @@ function render(league, stats) {
       ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
     </tr>`).join("");
   document.getElementById("standings").innerHTML = `
-    <div class="scroll"><table>
+    <div class="scroll"><table class="standings">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${head}</tr></thead>
       <tbody>${rows}</tbody>
-    </table></div>`;
+    </table></div>
+    <p class="hint">${CATEGORIES.map(c => `<b>${SHORT[c.key]}</b> ${esc(c.label.replace(/^Most /, ""))}`).join(" · ")}</p>`;
 
   document.getElementById("categories").innerHTML = results.map(({ cat, entries, best, candidates, capWarnings }) => `
     <section class="card${candidates ? " wide" : ""}">

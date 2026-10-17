@@ -77,3 +77,12 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
 .up { color: var(--up); } .down { color: var(--down); }
 .muted { color: var(--muted); }
 .grid { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 420px), 1fr)); }
+
+/* Standings fit a phone screen without sideways scrolling */
+@media (max-width: 560px) {
+  table.standings th, table.standings td { padding: 8px 2px; font-size: 14px; }
+  table.standings thead th { font-size: 10px; letter-spacing: -0.01em; }
+  table.standings .mgr { position: static; padding-left: 4px; }
+  table.standings .place { width: auto; padding: 8px 2px 8px 8px; }
+  table.standings .total { font-size: 16px; padding: 8px 6px; }
+}
