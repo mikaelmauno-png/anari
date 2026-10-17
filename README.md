@@ -22,7 +22,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 
 - **Next season** (`draft.html`, linked from the footers): each manager clicks their picks for next season and shares a summary to be entered into `league.json`. Choices are saved on that device.
 
-**End of season:** once every team has played 82 games, the standings switch to final: playoff picks (2 points per team that made it) are added to the totals, the projection is hidden, and a winner banner appears. The fetch script also archives the final stats and league file in `data/seasons/<season>/`. Add `?final` to the standings address to preview it.
+**End of season:** once every team has played 82 games, the standings switch to final: playoff picks (2 points per team that made it) are added to the totals, the projection is hidden, and a winner banner appears. A tie for first goes to whoever won the most categories, and is shared if that's level too. The fetch script also archives the final stats and league file in `data/seasons/<season>/`. Add `?final` to the standings address to preview it.
 
 ## Editing picks
 

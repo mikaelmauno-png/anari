@@ -15,9 +15,7 @@ function render(league, stats) {
   let rows = table;
   if (over) {
     const po = playoffPoints(league, stats.teams);
-    rows = table.map(r => ({ ...r, po: po[r.manager] || 0, total: r.total + (po[r.manager] || 0) }))
-      .sort((a, b) => b.total - a.total);
-    rows.forEach(r => { r.place = 1 + rows.filter(o => o.total > r.total).length; });
+    rows = rankFinal(league, table.map(r => ({ ...r, po: po[r.manager] || 0, total: r.total + (po[r.manager] || 0) })));
     renderBanner(league, stats, rows);
   }
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
@@ -68,7 +66,11 @@ function renderBanner(league, stats, rows) {
       <div class="trophy" aria-hidden="true">🏆</div>
       <div>
         <div class="banner-title">${names} ${winners.length > 1 ? "share" : "wins"} the ${seasonLabel(stats.season)} ${esc(league.name)}</div>
-        <div class="muted">${winners[0].total} points${runnerUp ? ` · runner-up ${esc(runnerUp.manager)} ${runnerUp.total}` : ""}${
+        <div class="muted">${winners.length > 1
+          ? `${winners[0].total} points and ${winners[0].wins} category wins each`
+          : rows.decidedByWins
+            ? `${winners[0].total} points, level with ${esc(runnerUp.manager)}; won on category wins (${winners[0].wins} vs ${runnerUp.wins})`
+            : `${winners[0].total} points${runnerUp ? ` · runner-up ${esc(runnerUp.manager)} ${runnerUp.total}` : ""}`}${
           finalPreview() ? " · preview, the season isn't over yet" : ""}</div>
       </div>
     </div>`;
@@ -79,9 +81,11 @@ function renderProjection(league, stats) {
   const proj = projectStats(stats);
   const { table } = computeStandings(league, proj);
   const po = playoffPoints(league, proj.teams);
-  const rows = table.map(r => ({ ...r, po: po[r.manager] || 0, final: r.total + (po[r.manager] || 0) }))
-    .sort((a, b) => b.final - a.final);
-  const place = r => 1 + rows.filter(o => o.final > r.final).length;
+  const rows = rankFinal(league, table.map(r => {
+    const p = po[r.manager] || 0;
+    return { ...r, po: p, total: r.total + p, final: r.total + p };
+  }));
+  const place = r => r.place;
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("projection").innerHTML = `
     <div class="scroll"><table class="standings tight">

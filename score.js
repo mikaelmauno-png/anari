@@ -171,6 +171,19 @@ function seasonOver(stats) {
   return finalPreview() || (stats.teams.length > 0 && stats.teams.every(t => t.gp >= SEASON_GAMES));
 }
 
+// Final ranking: by total; a tie for first goes to whoever won the most
+// categories (1st places, shared 1sts count), and is shared if that's level too.
+function rankFinal(league, rows) {
+  for (const r of rows) r.wins = CATEGORIES.filter(c => r.byCat[c.key] === league.scoring[0]).length;
+  const top = Math.max(...rows.map(r => r.total));
+  const better = (o, r) => o.total > r.total || (o.total === top && r.total === top && o.wins > r.wins);
+  rows.sort((a, b) => b.total - a.total || (a.total === top ? b.wins - a.wins : 0));
+  for (const r of rows) r.place = 1 + rows.filter(o => better(o, r)).length;
+  const tiedOnTotal = rows.filter(r => r.total === top);
+  rows.decidedByWins = tiedOnTotal.length > 1 && rows.filter(r => r.place === 1).length < tiedOnTotal.length;
+  return rows;
+}
+
 // 2 points per playoff pick that's in a playoff spot
 function playoffPoints(league, teams) {
   const inSpot = new Set(teams.filter(t => t.inPlayoffs).map(t => t.abbrev));
