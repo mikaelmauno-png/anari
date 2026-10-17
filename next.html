@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri next round</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
+  <style>
+    ul.lines { list-style: none; margin: 0; padding: 0; }
+    ul.lines li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+    ul.lines li:first-child { border-top: 0; }
+    ul.lines .val { font-size: 14px; text-align: right; white-space: nowrap; }
+    .cats { display: block; }
+    h3.sub { font-size: 15px; margin: 20px 0 8px; }
+    ul.games { list-style: none; margin: 0; display: grid; gap: 6px; }
+    ul.games li { display: grid; grid-template-columns: 52px 1fr 24px 1fr; gap: 6px; align-items: center; font-variant-numeric: tabular-nums; }
+    ul.games .time { color: var(--muted); font-size: 13px; }
+    ul.games .swatch { margin: 0 0 0 2px; width: 8px; height: 8px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last<span class="wide"> round</span></a><a href="next.html" aria-current="page">Next<span class="wide"> round</span></a><a href="trend.html">Trend</a><a href="playoffs.html">Playoffs</a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <h2 id="night-title">Next game night</h2>
+    <div id="night"></div>
+
+    <h2 id="ahead-title">Next 7 days</h2>
+    <div id="ahead"></div>
+
+    <footer>
+      Schedule from NHL.com, refreshed with every stats update. Coloured squares show whose picks are in each game.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "next.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>

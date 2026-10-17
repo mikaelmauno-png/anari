@@ -18,6 +18,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 - **Standings** (`index.html`): totals, every category, best possible picks.
 - **Last round** (`round.html`): the last game night (your picks' stat lines, all scores) and fantasy score changes this week and last week.
 - **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
+- **Next round** (`next.html`): who plays on the next game night, with opponents and local start times, and each manager's games over the next 7 days.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
 
 - **Next season** (`draft.html`, linked from the footers): the next-season draft. Each manager ranks where they want the 1st pick, gives 4 ranked choices per category, and picks 8 + 8 playoff teams, then shares a summary. Submissions go into `draft` in `league.json`. The order is last season's final standings reversed: over two rounds each manager claims the 1st pick in their highest-ranked free category, and the rest of each category's order continues around that list (everyone picks 1st, 2nd, 3rd and 4th twice). In each category everyone gets their highest choice nobody ahead took; within a category no two managers share a pick.
