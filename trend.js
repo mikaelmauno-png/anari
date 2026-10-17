@@ -1,8 +1,7 @@
 // Trend page: each manager's total minus the league average, at the end of
 // every week (Sunday snapshots in data/history).
 
-const W = 720, H = 300;
-const PAD = { top: 16, right: 84, bottom: 30, left: 40 };
+const PAD = { top: 16, right: 70, bottom: 30, left: 36 };
 
 function niceStep(max) {
   for (const s of [1, 2, 5, 10, 20]) if (max / s <= 4) return s;
@@ -10,6 +9,10 @@ function niceStep(max) {
 }
 
 function renderChart(league, weeks) {
+  // Drawn at the card's real width so text stays readable on a phone
+  const box = document.getElementById("chart");
+  const W = Math.max(280, box.clientWidth - 32);
+  const H = W < 500 ? 240 : 300;
   const series = league.managers.map(m => ({
     manager: m,
     color: managerColor(league, m),
@@ -124,6 +127,10 @@ async function main() {
       `${seasonLabel(snaps[0].season)} regular season · updated weekly, after Sunday's games`;
     renderChart(league, weeks);
     renderTable(league, weeks);
+    let lastWidth = innerWidth;
+    addEventListener("resize", () => {
+      if (innerWidth !== lastWidth) { lastWidth = innerWidth; renderChart(league, weeks); }
+    });
   } catch (err) {
     showError(err);
   }
