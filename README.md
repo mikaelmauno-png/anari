@@ -17,6 +17,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 
 - **Standings** (`index.html`): totals, every category, best possible picks.
 - **Last round** (`round.html`): the last game night (your picks' stat lines, all scores) and fantasy score changes this week and last week.
+- **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
 
 ## Editing picks

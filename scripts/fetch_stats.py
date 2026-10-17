@@ -204,6 +204,14 @@ class Fetcher:
             "pts": t["points"],
             "ptsPct": t["pointPctg"],
             "rank": t["leagueSequence"],
+            "conf": t["conferenceAbbrev"],
+            "div": t["divisionAbbrev"],
+            "divRank": t["divisionSequence"],
+            "wcRank": t["wildcardSequence"],
+            # Top 3 in the division or one of the conference's two wildcards
+            "inPlayoffs": t["divisionSequence"] <= 3 or 1 <= t["wildcardSequence"] <= 2,
+            # x/y/z/p = clinched, e = eliminated (only set late in the season)
+            "clinch": t.get("clinchIndicator"),
         } for t in data["standings"]]
 
 

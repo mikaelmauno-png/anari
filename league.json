@@ -13,6 +13,12 @@
     "presidents": { "Mauno": ["CAR"],        "Nynny": ["FLA"],       "Atte": ["DAL"],                 "Santeri": ["COL"] },
     "value":      { "Mauno": ["Zuccarello"], "Nynny": ["Formenton"], "Atte": ["Svechkov"],            "Santeri": ["Jackson Blake"] }
   },
+  "playoffs": {
+    "Mauno": [],
+    "Nynny": [],
+    "Atte": [],
+    "Santeri": []
+  },
   "minCap": 0.85,
   "capHits": {
     "Zuccarello": 1.0,

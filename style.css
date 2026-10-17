@@ -86,3 +86,9 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
   table.standings .place { width: auto; padding: 8px 2px 8px 8px; }
   table.standings .total { font-size: 16px; padding: 8px 6px; }
 }
+
+/* Four tabs fit a phone screen */
+@media (max-width: 560px) {
+  nav.tabs { width: 100%; }
+  nav.tabs a { flex: 1; text-align: center; padding: 6px 4px; font-size: 13px; }
+}

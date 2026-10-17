@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri playoffs</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
+  <style>
+    .card h4 { margin: 12px 0 4px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    ul.teams { list-style: none; margin: 0; padding: 0; }
+    ul.teams li { display: flex; align-items: baseline; gap: 8px; padding: 5px 0; border-top: 1px solid var(--line); }
+    ul.teams li:first-child { border-top: 0; }
+    ul.teams .name { flex: 1; min-width: 0; }
+    ul.teams li.out .name { color: var(--muted); }
+    ul.teams .mark { width: 14px; font-weight: 700; }
+    ul.teams li.in .mark { color: var(--up); }
+    ul.teams li.out .mark { color: var(--down); }
+    ul.teams .by { display: inline-flex; gap: 2px; min-width: 52px; justify-content: flex-end; }
+    ul.teams .by .swatch { margin: 0; }
+    ul.teams li.cutline { border-top: 2px dashed var(--muted); padding: 2px 0 0; }
+    .legend { display: flex; flex-wrap: wrap; gap: 4px 14px; font-size: 13px; margin: 0 0 10px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last round</a><a href="trend.html">Trend</a><a href="playoffs.html" aria-current="page">Playoffs</a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <h2>Playoff picks</h2>
+    <div id="summary"></div>
+    <p class="hint">2 points per team that makes the playoffs, settled at the end of the regular season. Not included in the standings totals yet.</p>
+
+    <h2>Picks</h2>
+    <div id="managers" class="grid"></div>
+
+    <h2>Playoff picture now</h2>
+    <div id="legend" class="legend"></div>
+    <div id="picture" class="grid"></div>
+
+    <footer>
+      A team is in if it's top 3 in its division or one of its conference's two wildcards. "Points back" counts standings points behind the second wildcard and ignores games in hand.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "playoffs.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>
