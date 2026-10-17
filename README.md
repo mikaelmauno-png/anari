@@ -13,6 +13,12 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 | `presidents` | Presidents' Trophy (league standings, team abbreviation) | NHL |
 | `value` | Cap hit per point, lowest wins (no entry-level contracts) | NHL + cap hit in `league.json` |
 
+## Pages
+
+- **Standings** (`index.html`): totals, every category, best possible picks.
+- **Last round** (`round.html`): the last game night (your picks' stat lines, all scores) and fantasy score changes this week and last week.
+- **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
+
 ## Editing picks
 
 Edit `league.json`. A pick can be:
@@ -36,7 +42,7 @@ Every drafted €/point player needs a cap hit. The €/point card also lists pl
 
 ## Stats
 
-`scripts/fetch_stats.py` downloads stats into `data/stats.json`. On GitHub, `.github/workflows/update-stats.yml` runs it every 3 hours. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
+`scripts/fetch_stats.py` downloads current stats into `data/stats.json`, the last game night into `data/lastnight.json`, and a snapshot of season totals through every Sunday into `data/history/`. Missed weeks are rebuilt from date-filtered stats. On GitHub, `.github/workflows/update-stats.yml` runs it every 3 hours. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
 
 ```bash
 python3 scripts/fetch_stats.py

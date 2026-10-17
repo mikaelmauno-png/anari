@@ -1,0 +1,61 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri trend</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; margin-bottom: 8px; }
+    .plot { position: relative; }
+    .plot svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+    .gridline { stroke: var(--line); stroke-width: 1; }
+    .zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
+    .crosshair { stroke: var(--muted); stroke-width: 1; }
+    .axis { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
+    .endlabel { fill: var(--text); font-size: 13px; font-weight: 600; }
+    .dot { stroke: var(--card); stroke-width: 2; }
+    .tip { position: absolute; top: 0; min-width: 150px; padding: 8px 10px; background: var(--card); border: 1px solid var(--line);
+      border-radius: 8px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); font-size: 13px; pointer-events: none; }
+    .tip b { display: block; } .tip .num { font-weight: 700; font-variant-numeric: tabular-nums; }
+    .tip div { margin-top: 3px; }
+    td small { display: block; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last round</a><a href="trend.html" aria-current="page">Trend</a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <h2>Points above or below average</h2>
+    <div id="chart" class="card"></div>
+
+    <h2>By week</h2>
+    <div id="table"></div>
+
+    <footer>
+      The league average is the mean of all managers' totals. 0 = average, so a +3 manager is 3 fantasy points above it.
+      Totals are each Sunday's standings, recalculated with the current picks and rules.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "trend.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>

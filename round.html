@@ -1,0 +1,60 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri last round</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <link rel="stylesheet" href="style.css">
+  <style>
+    ul.lines { list-style: none; margin: 0; padding: 0; }
+    ul.lines li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
+    ul.lines li:first-child { border-top: 0; }
+    ul.lines .val { font-size: 14px; }
+    .cats { display: block; }
+    h3.sub { font-size: 15px; margin: 20px 0 8px; }
+    ul.scores { list-style: none; margin: 0; display: grid; gap: 6px 24px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); font-variant-numeric: tabular-nums; }
+    ul.scores li { display: flex; gap: 6px; align-items: baseline; }
+    ul.scores .win { font-weight: 700; }
+    th.moves, td.moves { text-align: left; white-space: normal; min-width: 160px; }
+    .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 6px; margin: 1px 2px; border-radius: 6px; border: 1px solid currentColor; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html" aria-current="page">Last round</a><a href="trend.html">Trend</a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <h2 id="night-title">Last game night</h2>
+    <div id="night"></div>
+
+    <h2 id="week-title">This week so far</h2>
+    <div id="week"></div>
+
+    <h2 id="lastweek-title">Last week</h2>
+    <div id="lastweek"></div>
+
+    <footer>
+      Weeks run Monday–Sunday. GSAx from <a href="https://moneypuck.com/">MoneyPuck</a> can show up a few hours after the NHL stats.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "round.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>
