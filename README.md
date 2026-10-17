@@ -46,7 +46,7 @@ Every drafted €/point player needs a cap hit. The €/point card shows how man
 
 ## Stats
 
-`scripts/fetch_stats.py` downloads current stats into `data/stats.json`, the last game night into `data/lastnight.json`, and a snapshot of season totals through every Sunday into `data/history/`. Missed weeks are rebuilt from date-filtered stats. On GitHub, `.github/workflows/update-stats.yml` runs it every 3 hours. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
+`scripts/fetch_stats.py` downloads current stats into `data/stats.json`, the last game night into `data/lastnight.json`, and a snapshot of season totals through every Sunday into `data/history/`. Missed weeks are rebuilt from date-filtered stats. On GitHub, `.github/workflows/update-stats.yml` runs it hourly through the Finnish morning and every 4 hours otherwise. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
 
 ```bash
 python3 scripts/fetch_stats.py
