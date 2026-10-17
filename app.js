@@ -47,10 +47,12 @@ function render(league, stats) {
 function renderLookups(league, stats) {
   const caps = league.lookedUpCaps;
   if (!caps || !Object.keys(caps.players || {}).length) return "";
-  const n = Object.keys(caps.players).length;
+  const entries = Object.values(caps.players);
+  const pasted = entries.filter(e => e.via).length;
   const assumed = stats.skaters.filter(s => s.elcAssumed);
-  return `<p class="hint">${n} cap hits looked up on <a href="https://capfreeze.com/players.html">CapFreeze</a>
-      (about 10 more each day, highest scorers first; last ${fmtDay(caps.checked, { day: "numeric", month: "short" })}).</p>
+  return `<p class="hint">${entries.length - pasted} cap hits looked up on <a href="https://capfreeze.com/players.html">CapFreeze</a>
+      (about 10 more each day, highest scorers first; last ${fmtDay(caps.checked, { day: "numeric", month: "short" })})${pasted
+        ? ` and ${pasted} added from a <a href="https://puckpedia.com">PuckPedia</a> list` : ""}.</p>
     ${assumed.length ? `<p class="hint">Assumed entry-level contracts, so not eligible:
       ${assumed.map(s => `${esc(s.name)} <small>${esc(s.team)}, ${s.capIfNotElc} M</small>`).join(", ")}.
       If one isn't, add his cap hit to <code>capHits</code> in league.json.</p>` : ""}`;
