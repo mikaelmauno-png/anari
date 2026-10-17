@@ -15,8 +15,13 @@ const CATEGORIES = [
     check: s => s.rookie ? null : "not a rookie",
   },
   { key: "presidents", label: "Presidents' Trophy", kind: "team", value: t => -t.rank, unit: "" },
-  { key: "value", label: "Points per €M", kind: "skater", value: null, unit: "P/€M", decimals: 2 },
+  { key: "value", label: "€ per point", kind: "skater", value: null, unit: "k€/P" },
 ];
+
+// € per point, lower is better. Ranking works on "higher is better" values, so
+// the cost is negated; a player with no points ranks last.
+const costValue = (p, cap) => p > 0 ? -cap / p : -Infinity;
+const costText = v => v === -Infinity ? "no points" : `${Math.round(-v * 1000)}`;
 
 const norm = s => s.normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 
@@ -79,7 +84,7 @@ function scoreCategory(cat, league, stats) {
           const cap = Number((pick && pick.capHit) || item.cap);
           if (item.elc) e.warnings.push("entry-level contract");
           if (!cap) e.warnings.push("cap hit missing; add it to capHits in league.json");
-          else { e.cap = cap; e.value = item.p / cap; }
+          else { e.cap = cap; e.value = costValue(item.p, cap); }
         } else {
           e.value = cat.value(item);
           if (cat.tiebreak) e.tb = cat.tiebreak(item);
@@ -103,7 +108,7 @@ function scoreCategory(cat, league, stats) {
 }
 
 // league.capHits maps a player ("Name", "Name (TEAM)" or id) to a cap hit in
-// millions, or to "ELC" for entry-level contracts (not eligible for points/€).
+// millions, or to "ELC" for entry-level contracts (not eligible for €/point).
 function applyCapHits(league, stats) {
   const warnings = [];
   for (const [key, val] of Object.entries(league.capHits || {})) {
@@ -117,29 +122,29 @@ function applyCapHits(league, stats) {
 }
 
 // Players whose cap hit isn't entered yet but who would beat the best known
-// points/€ pick if paid the league minimum. Fill these in until the list is empty.
+// €/point pick if paid the league minimum. Fill these in until the list is empty.
 function valueCandidates(league, stats, best, limit = 12) {
   const minCap = league.minCap || 0.85;
   const draftCutoff = Math.floor(stats.season / 10000) - 3;
   const all = stats.skaters
-    .filter(s => s.cap === undefined && !s.elc && s.p > 0 && (!best || s.p / minCap > best.value))
+    .filter(s => s.cap === undefined && !s.elc && s.p > 0 && (!best || costValue(s.p, minCap) > best.value))
     .sort((a, b) => b.p - a.p || a.gp - b.gp)
     .map(s => ({
       item: s,
       // Above this cap hit the player can't beat the current best
-      maxCap: best ? s.p / best.value : null,
+      maxCap: best && best.value > -Infinity ? s.p * -best.value : null,
       likelyElc: s.rookie || (s.draft && s.draft >= draftCutoff),
     }));
   return { list: all.slice(0, limit), total: all.length };
 }
 
 // The best pick anyone could have made: the leader among all eligible players.
-// For points/€ only players with a known cap hit count.
+// For €/point only players with a known cap hit count.
 function bestPick(cat, stats) {
   const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
   let candidates;
   if (cat.key === "value") {
-    candidates = pool.filter(s => s.cap && !s.elc).map(s => ({ item: s, cap: s.cap, value: s.p / s.cap }));
+    candidates = pool.filter(s => s.cap && !s.elc).map(s => ({ item: s, cap: s.cap, value: costValue(s.p, s.cap) }));
     if (!candidates.length) return null;
   } else {
     candidates = pool.filter(x => !cat.check || !cat.check(x))
@@ -170,12 +175,12 @@ function computeStandings(league, stats) {
 // ---------- rendering ----------
 
 const esc = s => String(s).replace(/[&<>"]/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
-const SHORT = { goals: "G", points: "P", finnish: "FIN", gsax: "GSAx", pim: "PIM", rookies: "ROO", presidents: "PRES", value: "P/€" };
+const SHORT = { goals: "G", points: "P", finnish: "FIN", gsax: "GSAx", pim: "PIM", rookies: "ROO", presidents: "PRES", value: "€/P" };
 
 function fmtValue(cat, e) {
   if (!e.item) return "–";
   if (cat.kind === "team") return `${e.item.pts} pts · ${e.item.gp} GP`;
-  if (cat.key === "value") return e.cap ? `${e.value.toFixed(2)} <small>(${e.item.p} P / ${e.cap} M)</small>` : "–";
+  if (cat.key === "value") return e.cap ? `${costText(e.value)} <small>${e.value > -Infinity ? "k€/P " : ""}(${e.cap} M / ${e.item.p} P)</small>` : "–";
   const v = cat.value(e.item);
   const shown = cat.decimals ? v.toFixed(cat.decimals) : v;
   const tb = cat.tiebreak ? ` · ${cat.tiebreak(e.item)} G` : "";

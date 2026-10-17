@@ -11,7 +11,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 | `pim` | Penalty minutes | NHL |
 | `rookies` | Most points by a rookie | NHL |
 | `presidents` | Presidents' Trophy (league standings, team abbreviation) | NHL |
-| `value` | Points per €M of cap hit (no entry-level contracts) | NHL + cap hit in `league.json` |
+| `value` | Cap hit per point, lowest wins (no entry-level contracts) | NHL + cap hit in `league.json` |
 
 ## Editing picks
 
@@ -32,7 +32,7 @@ No free source allows automated cap hit downloads, so cap hits are entered by ha
 "capHits": { "Zuccarello": 1.0, "Matt Boldy (MIN)": 7.0, "Gavin McKenna": "ELC" }
 ```
 
-Every drafted points/€ player needs a cap hit. The points/€ card also lists players without one who would beat the best known pick if they earned the league minimum (`minCap`). Look those up (e.g. on CapWages or PuckPedia) and add them until the list is empty. The best pick is then the true best. For players who are clearly too expensive, a rough number is enough.
+Every drafted €/point player needs a cap hit. The €/point card also lists players without one who would beat the best known pick if they earned the league minimum (`minCap`). Look those up (e.g. on CapWages or PuckPedia) and add them until the list is empty. The best pick is then the true best. For players who are clearly too expensive, a rough number is enough.
 
 ## Stats
 
