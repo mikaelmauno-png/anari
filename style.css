@@ -105,3 +105,4 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
   background: var(--accent-soft); border: 1px solid var(--line); }
 .banner .trophy { font-size: 34px; line-height: 1; }
 .banner-title { font-size: 18px; font-weight: 700; }
+table.standings .po { border-right: 1px solid var(--line); }

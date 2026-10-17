@@ -23,13 +23,13 @@ function render(league, stats) {
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("standings").innerHTML = `
     <div class="scroll"><table class="standings${over ? " tight" : ""}">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${over ? `<th title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${over ? `<th class="po" title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
       <tbody>${rows.map(r => `
         <tr>
           <td class="place">${r.place}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.total}</td>
-          ${over ? `<td>${r.po}</td>` : ""}
+          ${over ? `<td class="po">${r.po}</td>` : ""}
           ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
         </tr>`).join("")}</tbody>
     </table></div>
@@ -85,13 +85,13 @@ function renderProjection(league, stats) {
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("projection").innerHTML = `
     <div class="scroll"><table class="standings tight">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th><th title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th><th class="po" title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
       <tbody>${rows.map(r => `
         <tr>
           <td class="place">${place(r)}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.final}</td>
-          <td>${r.po}</td>
+          <td class="po">${r.po}</td>
           ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
         </tr>`).join("")}</tbody>
     </table></div>
