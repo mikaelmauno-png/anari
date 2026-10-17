@@ -14,7 +14,7 @@
     "value":      { "Mauno": ["Zuccarello"], "Nynny": ["Formenton"], "Atte": ["Svechkov"],            "Santeri": ["Jackson Blake"] }
   },
   "playoffs": {
-    "Mauno": ["BUF", "CAR", "FLA", "MTL", "NJD", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "LAK", "MIN", "VGK"],
+    "Mauno": ["BUF", "CAR", "FLA", "MTL", "NJD", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "LAK", "MIN", "SJS", "VGK"],
     "Nynny": ["BUF", "CAR", "FLA", "MTL", "NJD", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "MIN", "SJS", "UTA", "VGK"],
     "Atte": ["CAR", "FLA", "MTL", "OTT", "PHI", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "MIN", "SJS", "UTA", "VGK"],
     "Santeri": ["BUF", "CAR", "FLA", "MTL", "NJD", "OTT", "TBL", "WSH",  "ANA", "COL", "DAL", "EDM", "LAK", "MIN", "UTA", "VGK"]
