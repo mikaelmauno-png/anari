@@ -3,15 +3,15 @@
 
 const CATEGORIES = [
   { key: "goals", label: "Most goals", kind: "skater", value: s => s.g, unit: "G" },
-  { key: "points", label: "Most points", kind: "skater", value: s => s.p, unit: "P" },
+  { key: "points", label: "Most points", kind: "skater", value: s => s.p, tiebreak: s => s.g, unit: "P" },
   {
-    key: "finnish", label: "Most points, Finnish player", kind: "skater", value: s => s.p, unit: "P",
+    key: "finnish", label: "Most points, Finnish player", kind: "skater", value: s => s.p, tiebreak: s => s.g, unit: "P",
     check: s => s.nat === "FIN" ? null : `not Finnish (${s.nat || "unknown"})`,
   },
   { key: "gsax", label: "GSAx", kind: "goalie", value: g => g.gsax, unit: "GSAx", decimals: 2, source: "MoneyPuck" },
   { key: "pim", label: "Penalty minutes", kind: "skater", value: s => s.pim, unit: "PIM" },
   {
-    key: "rookies", label: "Most points, rookie", kind: "skater", value: s => s.p, unit: "P",
+    key: "rookies", label: "Most points, rookie", kind: "skater", value: s => s.p, tiebreak: s => s.g, unit: "P",
     check: s => s.rookie ? null : "not a rookie",
   },
   { key: "presidents", label: "Presidents' Trophy", kind: "team", value: t => -t.rank, unit: "" },
@@ -57,6 +57,12 @@ function resolve(pick, pool, kind, check) {
   return { item: hits[0] };
 }
 
+// Sorts best first; 0 means a real tie.
+function compareEntries(a, b) {
+  if (Math.abs(a.value - b.value) > 1e-9) return b.value - a.value;
+  return (b.tb || 0) - (a.tb || 0);
+}
+
 function scoreCategory(cat, league, stats) {
   const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
   const entries = [];
@@ -76,6 +82,7 @@ function scoreCategory(cat, league, stats) {
           else { e.cap = cap; e.value = item.p / cap; }
         } else {
           e.value = cat.value(item);
+          if (cat.tiebreak) e.tb = cat.tiebreak(item);
         }
       } else if (cat.kind === "team") {
         e.value = -Infinity;
@@ -83,12 +90,13 @@ function scoreCategory(cat, league, stats) {
       entries.push(e);
     }
   }
-  // Competition ranking: tied entries share the higher place (and its points),
-  // and the following place is skipped.
-  entries.sort((a, b) => b.value - a.value);
+  // Competition ranking: a tie on the stat is broken by the category's tiebreak
+  // (goals for the points categories); entries still tied share the higher
+  // place (and its points), and the following place is skipped.
+  entries.sort(compareEntries);
   for (const e of entries) {
-    e.place = 1 + entries.filter(o => o.value > e.value + 1e-9).length;
-    e.tied = entries.some(o => o !== e && Math.abs(o.value - e.value) < 1e-9);
+    e.place = 1 + entries.filter(o => compareEntries(o, e) < 0).length;
+    e.tied = entries.some(o => o !== e && compareEntries(o, e) === 0);
     e.points = league.scoring[e.place - 1] || 0;
   }
   return entries;
@@ -134,9 +142,10 @@ function bestPick(cat, stats) {
     candidates = pool.filter(s => s.cap && !s.elc).map(s => ({ item: s, cap: s.cap, value: s.p / s.cap }));
     if (!candidates.length) return null;
   } else {
-    candidates = pool.filter(x => !cat.check || !cat.check(x)).map(x => ({ item: x, value: cat.value(x) }));
+    candidates = pool.filter(x => !cat.check || !cat.check(x))
+      .map(x => ({ item: x, value: cat.value(x), tb: cat.tiebreak && cat.tiebreak(x) }));
   }
-  candidates.sort((a, b) => b.value - a.value);
+  candidates.sort(compareEntries);
   return candidates[0] || null;
 }
 
@@ -169,7 +178,8 @@ function fmtValue(cat, e) {
   if (cat.key === "value") return e.cap ? `${e.value.toFixed(2)} <small>(${e.item.p} P / ${e.cap} M)</small>` : "–";
   const v = cat.value(e.item);
   const shown = cat.decimals ? v.toFixed(cat.decimals) : v;
-  return `${cat.decimals && v > 0 ? "+" : ""}${shown} <small>${cat.unit} · ${e.item.gp} GP</small>`;
+  const tb = cat.tiebreak ? ` · ${cat.tiebreak(e.item)} G` : "";
+  return `${cat.decimals && v > 0 ? "+" : ""}${shown} <small>${cat.unit}${tb} · ${e.item.gp} GP</small>`;
 }
 
 function pickLabel(cat, e) {
