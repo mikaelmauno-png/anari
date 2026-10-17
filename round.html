@@ -21,7 +21,8 @@
     ul.scores { list-style: none; margin: 0; display: grid; gap: 6px 24px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); font-variant-numeric: tabular-nums; }
     ul.scores li { display: flex; gap: 6px; align-items: baseline; }
     ul.scores .win { font-weight: 700; }
-    th.moves, td.moves { text-align: left; white-space: normal; min-width: 160px; }
+    tr.has-moves > * { border-bottom: 0; padding-bottom: 2px; }
+    tr.moves td { text-align: left; white-space: normal; padding-top: 0; }
     .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 6px; margin: 1px 2px; border-radius: 6px; border: 1px solid currentColor; }
   </style>
 </head>

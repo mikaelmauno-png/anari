@@ -101,18 +101,18 @@ function renderChange(el, league, from, to) {
       return d && b ? `<span class="chip ${d > 0 ? "up" : "down"}">${SHORT[c.key]} ${d > 0 ? "+" : "−"}${Math.abs(d)}</span>` : "";
     }).join("");
     return `
-      <tr>
+      <tr class="${b ? "has-moves" : ""}">
         <td class="place">${r.place}</td>
         <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, r.manager)}"></span>${esc(r.manager)}</th>
         <td>${b ? start : "–"}</td>
         <td class="total">${r.total}</td>
         <td class="${delta > 0 ? "up" : delta < 0 ? "down" : "muted"}">${b ? (delta > 0 ? "+" : delta < 0 ? "−" : "±") + Math.abs(delta) : ""}</td>
-        <td class="moves">${moves || (b ? `<span class="muted">no change</span>` : "")}</td>
-      </tr>`;
+      </tr>
+      ${b ? `<tr class="moves"><td></td><td colspan="4">${moves || `<span class="muted">no change</span>`}</td></tr>` : ""}`;
   }).join("");
   el.innerHTML = `
     <div class="scroll"><table>
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Start</th><th>End</th><th>±</th><th class="moves">Category changes</th></tr></thead>
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Start</th><th>End</th><th>±</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;
 }
