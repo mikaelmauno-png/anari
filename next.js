@@ -43,7 +43,7 @@ function renderNextNight(league, stats, schedule) {
               <small class="cats">${p.cats.join(" · ")}</small></span>
             <span class="val">${home ? "vs" : "at"} ${esc(home ? g.away : g.home)}<br><small>${fmtTime(g.start)}</small></span></li>`;
         }).join("")}</ul>` : `<p class="muted">No picks playing.</p>`}
-        ${idle.length ? `<p class="hint">Not playing: ${idle.map(p => esc(p.name)).join(", ")}</p>` : ""}
+        ${idle.length ? `<p class="hint">No game left: ${idle.map(p => esc(p.name)).join(", ")}</p>` : ""}
       </section>`;
   }).join("");
 
