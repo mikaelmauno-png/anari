@@ -25,7 +25,7 @@ function render(league, stats) {
     <p class="hint">${CATEGORIES.map(c => `<b>${SHORT[c.key]}</b> ${esc(c.label.replace(/^Most /, ""))}`).join(" · ")}</p>`;
 
   document.getElementById("categories").innerHTML = results.map(({ cat, entries, best, candidates, capWarnings }) => `
-    <section class="card${candidates ? " wide" : ""}">
+    <section class="card">
       <h3>${esc(cat.label)}${cat.source ? ` <span class="src">${cat.source}</span>` : ""}</h3>
       <ol class="rank">
         ${entries.map(e => `

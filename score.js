@@ -9,12 +9,12 @@ const CATEGORIES = [
   },
   { key: "gsax", label: "GSAx", kind: "goalie", value: g => g.gsax, unit: "GSAx", decimals: 2, source: "MoneyPuck" },
   { key: "pim", label: "Penalty minutes", kind: "skater", value: s => s.pim, unit: "PIM" },
+  { key: "value", label: "€ per point", kind: "skater", value: null, unit: "k€/P" },
   {
     key: "rookies", label: "Most points, rookie", kind: "skater", value: s => s.p, tiebreak: s => s.g, unit: "P",
     check: s => s.rookie ? null : "not a rookie",
   },
   { key: "presidents", label: "Presidents' Trophy", kind: "team", value: t => -t.rank, unit: "" },
-  { key: "value", label: "€ per point", kind: "skater", value: null, unit: "k€/P" },
 ];
 
 // € per point, lower is better. Ranking works on "higher is better" values, so
