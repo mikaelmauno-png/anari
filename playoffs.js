@@ -50,7 +50,7 @@ function render(league, stats) {
 
   const ranked = scores.slice().sort((a, b) => b.points - a.points);
   document.getElementById("summary").innerHTML = `
-    <div class="scroll"><table>
+    <div class="scroll"><table class="standings">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th>East</th><th>West</th><th>Correct</th><th>Points</th></tr></thead>
       <tbody>${ranked.map(s => `
         <tr>
