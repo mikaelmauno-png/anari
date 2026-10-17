@@ -106,3 +106,6 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
 .banner .trophy { font-size: 34px; line-height: 1; }
 .banner-title { font-size: 18px; font-weight: 700; }
 table.standings .po { border-right: 1px solid var(--line); }
+
+/* Five tabs on a phone: "Last round" / "Next round" shorten to "Last" / "Next" */
+@media (max-width: 560px) { nav.tabs .wide { display: none; } }
