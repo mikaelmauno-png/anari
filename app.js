@@ -40,20 +40,32 @@ function render(league, stats) {
       <p class="best">${best
         ? `${candidates && candidates.total ? "Best known pick" : "Best possible pick"}: <b>${pickLabel(cat, best)}</b> <span>${fmtValue(cat, best)}</span>`
         : "Best possible pick: no data"}</p>
-      ${candidates ? renderCandidates(league, candidates, capWarnings) : ""}
+      ${candidates ? renderCandidates(league, candidates, capWarnings, stats) : ""}
     </section>`).join("");
 }
 
-function renderCandidates(league, { list, total }, capWarnings) {
-  const warn = capWarnings.map(w => `<p class="warn">⚠ ${esc(w)}</p>`).join("");
+function renderLookups(league, stats) {
+  const caps = league.lookedUpCaps;
+  if (!caps || !Object.keys(caps.players || {}).length) return "";
+  const n = Object.keys(caps.players).length;
+  const assumed = stats.skaters.filter(s => s.elcAssumed);
+  return `<p class="hint">${n} cap hits looked up on <a href="https://capfreeze.com/players.html">CapFreeze</a>
+      (about 10 more each day, highest scorers first; last ${fmtDay(caps.checked, { day: "numeric", month: "short" })}).</p>
+    ${assumed.length ? `<p class="hint">Assumed entry-level contracts, so not eligible:
+      ${assumed.map(s => `${esc(s.name)} <small>${esc(s.team)}, ${s.capIfNotElc} M</small>`).join(", ")}.
+      If one isn't, add his cap hit to <code>capHits</code> in league.json.</p>` : ""}`;
+}
+
+function renderCandidates(league, { list, total }, capWarnings, stats) {
+  const warn = capWarnings.map(w => `<p class="warn">⚠ ${esc(w)}</p>`).join("") + renderLookups(league, stats);
   if (!total) return `${warn}<p class="hint">All players who could beat it have a cap hit entered ✓</p>`;
   return `${warn}
     <details class="cands">
-      <summary>${total} player${total === 1 ? "" : "s"} could still be better: check their cap hits</summary>
-      <p class="hint">Look up each cap hit and add it to <code>capHits</code> in league.json in millions,
-        e.g. <code>"Matt Boldy (MIN)": 7.0</code>, or <code>"ELC"</code> for entry-level contracts.
-        A player only beats the best known pick if his cap hit is under the limit shown, so for
-        obvious stars a rough number (e.g. <code>10</code>) is enough to clear them off the list.</p>
+      <summary>${total} player${total === 1 ? "" : "s"} could still be better: cap hit not known yet</summary>
+      <p class="hint">These are looked up automatically, about 10 a day from the top of this list.
+        A player only beats the best known pick if his cap hit is under the limit shown.
+        To fill one in sooner, add it to <code>capHits</code> in league.json in millions,
+        e.g. <code>"Matt Boldy (MIN)": 7.0</code>, or <code>"ELC"</code> for an entry-level contract.</p>
       <ol class="rank">
         ${list.map(c => `
           <li>
@@ -65,13 +77,13 @@ function renderCandidates(league, { list, total }, capWarnings) {
             <span></span>
           </li>`).join("")}
       </ol>
-      ${total > list.length ? `<p class="hint">…and ${total - list.length} more. The list shrinks as you add cap hits.</p>` : ""}
+      ${total > list.length ? `<p class="hint">…and ${total - list.length} more. The list shrinks as cap hits come in.</p>` : ""}
     </details>`;
 }
 
 async function main() {
   try {
-    const [league, stats] = await Promise.all([loadJSON("league.json"), loadJSON("data/stats.json")]);
+    const [league, stats] = await Promise.all([loadLeague(), loadJSON("data/stats.json")]);
     render(league, stats);
   } catch (err) {
     showError(err);

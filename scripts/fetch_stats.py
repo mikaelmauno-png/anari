@@ -6,15 +6,19 @@ Writes:
   data/lastnight.json        results and stat lines from the last game night
   data/history/<date>.json   season totals through each Sunday (weekly chart)
   data/history/index.json    list of the weekly snapshot dates
+  data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
 
 Runs on a schedule in GitHub Actions (the NHL API and MoneyPuck don't allow
 direct browser requests). Standard library only.
 """
 
 import csv
+import html
 import io
 import json
 import os
+import re
+import unicodedata
 import sys
 import time
 import urllib.parse
@@ -31,6 +35,8 @@ WEB_API = "https://api-web.nhle.com/v1"
 MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/regular/{kind}.csv"
 MONEYPUCK_GOALIE_GAMES = "https://moneypuck.com/moneypuck/playerData/careers/gameByGame/regular/goalies/{id}.csv"
 FINAL_STATES = {"OFF", "FINAL"}
+CAPFREEZE_PLAYERS = "https://capfreeze.com/players.html"
+CAP_LOOKUPS_PER_DAY = 10
 
 
 def get(url, retries=4, pause=0):
@@ -333,12 +339,122 @@ def write_weekly_snapshots(f):
         write_json(index_path, sorted(index))
 
 
+# ---------- cap hits ----------
+
+def norm(name):
+    s = unicodedata.normalize("NFD", name)
+    return re.sub(r"[^a-z0-9]", "", "".join(c for c in s if not unicodedata.combining(c)).lower())
+
+
+def last_name(full):
+    parts = full.split(" ", 1)
+    return norm(parts[1] if len(parts) > 1 else full)
+
+
+def find_skater(key, skaters):
+    """Same matching as the web app: id, "Name", "Last name" or "Name (TEAM)"."""
+    key = str(key)
+    if key.isdigit():
+        return next((s for s in skaters if s["id"] == int(key)), None)
+    m = re.match(r"^(.*?)\s*\(([A-Za-z]{2,3})\)\s*$", key)
+    name, team = (norm(m.group(1)), m.group(2).upper()) if m else (norm(key), None)
+    hits = [s for s in skaters if norm(s["name"]) == name] or [s for s in skaters if last_name(s["name"]) == name]
+    if team and (len(hits) > 1 or any(s["team"] == team for s in hits)):
+        hits = [s for s in hits if s["team"] == team]
+    return hits[0] if len(hits) == 1 else None
+
+
+def capfreeze_players():
+    """Rows of CapFreeze's player contract table: name, team, cap hit (M), age."""
+    page = get(CAPFREEZE_PLAYERS)
+    rows = []
+    for tr in re.findall(r"<tr[^>]*>(.*?)</tr>", page, re.S):
+        cells = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip()
+                 for c in re.findall(r"<t[hd][^>]*>(.*?)</t[hd]>", tr, re.S)]
+        if len(cells) < 5 or not cells[4].startswith("$"):
+            continue
+        rows.append({"name": cells[0], "team": cells[1], "age": cells[3],
+                     "cap": round(int(re.sub(r"[^0-9]", "", cells[4])) / 1e6, 3)})
+    return rows
+
+
+def match_capfreeze(skater, rows):
+    """By full name and team; falls back to last name and team for spelling
+    differences (NHL "Fedor Svechkov" vs CapFreeze "Fyodor Svechkov")."""
+    for test in (lambda r: norm(r["name"]) == norm(skater["name"]) and r["team"] == skater["team"],
+                 lambda r: norm(r["name"]) == norm(skater["name"]),
+                 lambda r: last_name(r["name"]) == last_name(skater["name"]) and r["team"] == skater["team"]):
+        hits = [r for r in rows if test(r)]
+        if len(hits) == 1:
+            return hits[0]
+    return None
+
+
+def write_cap_lookups(league):
+    """Look up a few players' cap hits a day: the highest scorers without a
+    known cap hit who could still beat the cheapest known € per point."""
+    path = os.path.join(DATA, "caphits.json")
+    store = read_json(path) or {"source": "CapFreeze (capfreeze.com)", "players": {}, "notFound": {}}
+    today = date.today().isoformat()
+    if store.get("checked") == today:
+        return
+
+    stats = read_json(os.path.join(DATA, "stats.json"))
+    skaters = stats["skaters"]
+    by_id = {s["id"]: s for s in skaters}
+    known = {}  # id -> cap in millions, or "ELC"
+    for key, val in (league.get("capHits") or {}).items():  # manual entries win
+        s = find_skater(key, skaters)
+        if s:
+            known[s["id"]] = val
+    for pid, entry in store["players"].items():
+        known.setdefault(int(pid), "ELC" if entry.get("elc") else entry["cap"])
+
+    costs = [float(v) / by_id[pid]["p"] for pid, v in known.items()
+             if str(v).upper() != "ELC" and pid in by_id and by_id[pid]["p"] > 0]
+    best = min(costs) if costs else None
+    min_cap = league.get("minCap", 0.85)
+    retry_after = (date.today() - timedelta(days=7)).isoformat()
+    todo = [s for s in skaters
+            if s["id"] not in known and s["p"] > 0
+            and store["notFound"].get(str(s["id"]), "") < retry_after
+            and (best is None or min_cap / s["p"] < best)]
+    todo.sort(key=lambda s: -s["p"])
+    todo = todo[:CAP_LOOKUPS_PER_DAY]
+
+    if todo:
+        rows = capfreeze_players()
+        draft_cutoff = int(str(league["season"])[:4]) - 3
+        for s in todo:
+            row = match_capfreeze(s, rows)
+            if not row:
+                store["notFound"][str(s["id"])] = today
+                print(f"cap hit: no CapFreeze match for {s['name']} ({s['team']})", file=sys.stderr)
+                continue
+            # CapFreeze doesn't mark entry-level deals: a cheap contract for a rookie
+            # or a recent draft pick is assumed to be one (confirm in league.json)
+            elc = row["cap"] <= 1.1 and (s["rookie"] or (s.get("draft") or 0) >= draft_cutoff)
+            store["players"][str(s["id"])] = {
+                "name": s["name"], "team": s["team"], "cap": row["cap"], "elc": elc, "date": today,
+            }
+            store["notFound"].pop(str(s["id"]), None)
+            print(f"cap hit: {s['name']} {row['cap']}M{' (ELC?)' if elc else ''}")
+
+    store["checked"] = today
+    store["updated"] = now_iso()
+    write_json(path, store)
+
+
 def main():
     league = read_json(LEAGUE)
     f = Fetcher(league["season"])
     write_current(f)
     write_last_night(f)
     write_weekly_snapshots(f)
+    try:
+        write_cap_lookups(league)
+    except Exception as e:  # a CapFreeze hiccup shouldn't stop the stats update
+        print(f"cap lookups failed: {e}", file=sys.stderr)
     print("done")
 
 

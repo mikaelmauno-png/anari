@@ -106,16 +106,28 @@ function scoreCategory(cat, league, stats) {
   return entries;
 }
 
-// league.capHits maps a player ("Name", "Name (TEAM)" or id) to a cap hit in
-// millions, or to "ELC" for entry-level contracts (not eligible for €/point).
+// Cap hits come from two places: data/caphits.json, looked up on CapFreeze a few
+// players a day by the stats update (by NHL id), and league.capHits, entered by
+// hand ("Name", "Name (TEAM)" or id -> millions, or "ELC" for entry-level
+// contracts, which aren't eligible for €/point). Hand entries win.
 function applyCapHits(league, stats) {
   const warnings = [];
+  const looked = (league.lookedUpCaps && league.lookedUpCaps.players) || {};
+  for (const item of stats.skaters) {
+    const e = looked[item.id];
+    if (!e) continue;
+    item.capSource = "CapFreeze";
+    if (e.elc) { item.elc = true; item.elcAssumed = true; item.capIfNotElc = e.cap; }
+    else item.cap = e.cap;
+  }
   for (const [key, val] of Object.entries(league.capHits || {})) {
     const { item, warning } = resolve(key, stats.skaters, "skater");
     if (warning) warnings.push(`capHits: ${warning}`);
     if (!item) continue;
-    if (String(val).toUpperCase() === "ELC") item.elc = true;
-    else item.cap = Number(val);
+    item.capSource = "league.json";
+    item.elcAssumed = false;
+    if (String(val).toUpperCase() === "ELC") { item.elc = true; delete item.cap; }
+    else { item.elc = false; item.cap = Number(val); }
   }
   return warnings;
 }
@@ -201,6 +213,15 @@ const managerColor = (league, m) => SERIES[league.managers.indexOf(m) % SERIES.l
 const seasonLabel = season => `${String(season).slice(0, 4)}–${String(season).slice(6)}`;
 const fmtDay = (iso, opts = { weekday: "short", day: "numeric", month: "short" }) =>
   new Date(iso + "T12:00:00").toLocaleDateString("en-GB", opts);
+
+// league.json plus the cap hits looked up so far (missing file is fine)
+async function loadLeague() {
+  const [league, caps] = await Promise.all([
+    loadJSON("league.json"), loadJSON("data/caphits.json").catch(() => null),
+  ]);
+  league.lookedUpCaps = caps;
+  return league;
+}
 
 async function loadJSON(path) {
   const r = await fetch(`${path}?t=${Date.now()}`);

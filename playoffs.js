@@ -102,7 +102,7 @@ function render(league, stats) {
 
 async function main() {
   try {
-    const [league, stats] = await Promise.all([loadJSON("league.json"), loadJSON("data/stats.json")]);
+    const [league, stats] = await Promise.all([loadLeague(), loadJSON("data/stats.json")]);
     render(league, stats);
   } catch (err) {
     showError(err);

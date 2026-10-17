@@ -33,13 +33,16 @@ A manager can have several picks in a category. Each pick is ranked on its own. 
 
 ## Cap hits
 
-No free source allows automated cap hit downloads, so cap hits are entered by hand in `capHits` in `league.json`, in millions. Use `"ELC"` for entry-level contracts, which aren't eligible:
+Cap hits come from two places, in millions:
+
+- **Looked up automatically:** once a day the stats update takes the 10 highest-scoring players who could still beat the cheapest known €/point pick and have no cap hit yet. It looks them up on [CapFreeze](https://capfreeze.com/players.html) (one page request) and saves them to `data/caphits.json`. CapFreeze doesn't mark entry-level contracts, so a cheap deal for a rookie or a player drafted in the last 3 years is assumed to be one. The €/point card lists those so you can check them.
+- **By hand** in `capHits` in `league.json`. These always win. Use `"ELC"` for entry-level contracts, which aren't eligible:
 
 ```json
 "capHits": { "Zuccarello": 1.0, "Matt Boldy (MIN)": 7.0, "Gavin McKenna": "ELC" }
 ```
 
-Every drafted €/point player needs a cap hit. The €/point card also lists players without one who would beat the best known pick if they earned the league minimum (`minCap`). Look those up (e.g. on CapWages or PuckPedia) and add them until the list is empty. The best pick is then the true best. For players who are clearly too expensive, a rough number is enough.
+Every drafted €/point player needs a cap hit. The €/point card shows how many players without one could still beat the best known pick; that list shrinks as lookups come in and as the season goes on.
 
 ## Stats
 

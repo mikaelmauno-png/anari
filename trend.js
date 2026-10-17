@@ -110,7 +110,7 @@ function renderTable(league, weeks) {
 
 async function main() {
   try {
-    const [league, index] = await Promise.all([loadJSON("league.json"), loadJSON("data/history/index.json")]);
+    const [league, index] = await Promise.all([loadLeague(), loadJSON("data/history/index.json")]);
     if (!index.length) {
       document.getElementById("chart").innerHTML = `<p class="muted">No weekly snapshots yet.</p>`;
       return;

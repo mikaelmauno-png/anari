@@ -120,7 +120,7 @@ function renderChange(el, league, from, to) {
 async function main() {
   try {
     const [league, stats, night, index] = await Promise.all([
-      loadJSON("league.json"), loadJSON("data/stats.json"),
+      loadLeague(), loadJSON("data/stats.json"),
       loadJSON("data/lastnight.json"), loadJSON("data/history/index.json"),
     ]);
     document.getElementById("meta").textContent = `${seasonLabel(stats.season)} regular season`;
