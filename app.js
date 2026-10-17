@@ -57,15 +57,15 @@ function renderProjection(league, stats) {
   const place = r => 1 + rows.filter(o => o.final > r.final).length;
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("projection").innerHTML = `
-    <div class="scroll"><table class="standings">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${head}<th title="Playoff picks, 2 per team in">PO</th></tr></thead>
+    <div class="scroll"><table class="standings tight">
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th><th title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
       <tbody>${rows.map(r => `
         <tr>
           <td class="place">${place(r)}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.final}</td>
-          ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
           <td>${r.po}</td>
+          ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
         </tr>`).join("")}</tbody>
     </table></div>
     <p class="hint">Every pick's stats at their current pace over ${SEASON_GAMES} games (team games played so far:

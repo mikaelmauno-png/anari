@@ -94,3 +94,8 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
 }
 
 .gap { color: var(--muted); font-size: 12px; }
+@media (max-width: 560px) {
+  table.standings.tight th, table.standings.tight td { padding-left: 1px; padding-right: 1px; }
+  table.standings.tight .place { padding-left: 6px; }
+  table.standings.tight .total { padding: 8px 4px; }
+}
