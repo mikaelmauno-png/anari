@@ -2,8 +2,11 @@ name: Update stats
 
 on:
   schedule:
-    # Every 3 hours; NHL games finish late evening / night Finnish time
-    - cron: "15 */3 * * *"
+    # Cron is UTC. Hourly through the Finnish morning (04-11 local in both
+    # summer and winter time), when the night's NHL games and MoneyPuck's GSAx
+    # come in; every 4 hours otherwise.
+    - cron: "15 1-9 * * *"
+    - cron: "15 13,17,21 * * *"
   workflow_dispatch:
 
 permissions:
