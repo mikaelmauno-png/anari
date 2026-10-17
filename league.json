@@ -7,7 +7,7 @@
     "goals":      { "Mauno": ["McDavid"],    "Nynny": ["Kaprizov"],  "Atte": ["MacKinnon"],           "Santeri": ["Caufield"] },
     "points":     { "Mauno": ["McDavid"],    "Nynny": ["Celebrini"], "Atte": ["Kucherov"],            "Santeri": ["MacKinnon"] },
     "finnish":    { "Mauno": ["Heiskanen"],  "Nynny": ["Barkov"],    "Atte": ["Sebastian Aho (CAR)"], "Santeri": ["Rantanen"] },
-    "gsax":       { "Mauno": ["Sorokin"],    "Nynny": ["Swayman"],   "Atte": ["Vasilevskiy"],         "Santeri": ["Logan Thompson"] },
+    "gsax":       { "Mauno": ["Swayman"],    "Nynny": ["Sorokin"],   "Atte": ["Vasilevskiy"],         "Santeri": ["Logan Thompson"] },
     "pim":        { "Mauno": ["Zadorov"],    "Nynny": ["McCarron"],  "Atte": ["Kastelic"],            "Santeri": ["Tom Wilson"] },
     "rookies":    { "Mauno": ["Stenberg"],   "Nynny": ["Helenius"],  "Atte": ["McKenna"],             "Santeri": ["Martone"] },
     "presidents": { "Mauno": ["CAR"],        "Nynny": ["FLA"],       "Atte": ["DAL"],                 "Santeri": ["COL"] },

@@ -11,7 +11,8 @@ self.addEventListener("fetch", e => {
   // Ignore the ?t= cache-buster so the offline copy is found
   const key = req.url.split("?")[0];
   e.respondWith(
-    fetch(req)
+    // no-cache: revalidate with the server instead of using a stale HTTP-cached copy
+    fetch(req.url, { cache: "no-cache", credentials: "same-origin" })
       .then(res => {
         if (res.ok) { const copy = res.clone(); caches.open(CACHE).then(c => c.put(key, copy)); }
         return res;
