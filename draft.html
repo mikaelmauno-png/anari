@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri next season</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
+  <style>
+    #managers { display: flex; flex-wrap: wrap; gap: 8px; }
+    button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
+    button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+    #form { display: grid; gap: 12px; margin-top: 12px; }
+    .card h4 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .field { display: block; padding: 8px 0; border-top: 1px solid var(--line); }
+    .field:first-of-type { border-top: 0; }
+    .lbl { display: block; font-weight: 600; margin-bottom: 4px; }
+    .lbl small { font-weight: 400; color: var(--muted); }
+    input[type=text] { width: 100%; font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+    input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
+    .hint-line { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; min-height: 1em; }
+    .teams-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
+    .team-btn { padding: 8px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+    pre.summary { white-space: pre-wrap; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 0 0 8px; user-select: all; }
+    .actions { display: flex; gap: 8px; align-items: center; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last round</a><a href="trend.html">Trend</a><a href="playoffs.html">Playoffs</a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <h2>Who's picking?</h2>
+    <div id="managers"></div>
+
+    <div id="form"></div>
+
+    <h2>Summary</h2>
+    <div id="summary"></div>
+
+    <footer>
+      Player suggestions are this season's NHL players; for prospects who haven't played yet, type the name.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "draft.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>

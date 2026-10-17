@@ -6,21 +6,32 @@ function render(league, stats) {
   document.getElementById("league-name").textContent = league.name;
   const updated = new Date(stats.updated);
   const season = String(stats.season);
-  document.getElementById("meta").textContent =
-    `${season.slice(0, 4)}–${season.slice(6)} regular season · stats updated ${updated.toLocaleString()}`;
+  const over = seasonOver(stats);
+  document.getElementById("meta").textContent = over
+    ? `${seasonLabel(stats.season)} regular season · final standings`
+    : `${seasonLabel(stats.season)} regular season · stats updated ${updated.toLocaleString()}`;
 
+  // At the end of the season the playoff picks count: 2 points per team that made it
+  let rows = table;
+  if (over) {
+    const po = playoffPoints(league, stats.teams);
+    rows = table.map(r => ({ ...r, po: po[r.manager] || 0, total: r.total + (po[r.manager] || 0) }))
+      .sort((a, b) => b.total - a.total);
+    rows.forEach(r => { r.place = 1 + rows.filter(o => o.total > r.total).length; });
+    renderBanner(league, stats, rows);
+  }
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
-  const rows = table.map(r => `
-    <tr>
-      <td class="place">${r.place}</td>
-      <th scope="row" class="mgr">${esc(r.manager)}</th>
-      <td class="total">${r.total}</td>
-      ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
-    </tr>`).join("");
   document.getElementById("standings").innerHTML = `
-    <div class="scroll"><table class="standings">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${head}</tr></thead>
-      <tbody>${rows}</tbody>
+    <div class="scroll"><table class="standings${over ? " tight" : ""}">
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${over ? `<th title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td class="place">${r.place}</td>
+          <th scope="row" class="mgr">${esc(r.manager)}</th>
+          <td class="total">${r.total}</td>
+          ${over ? `<td>${r.po}</td>` : ""}
+          ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
+        </tr>`).join("")}</tbody>
     </table></div>
     <p class="hint">${CATEGORIES.map(c => `<b>${SHORT[c.key]}</b> ${esc(c.label.replace(/^Most /, ""))}`).join(" · ")}</p>`;
 
@@ -44,7 +55,23 @@ function render(league, stats) {
       ${candidates ? renderCandidates(league, candidates, capWarnings, stats) : ""}
     </section>`).join("");
 
-  renderProjection(league, stats);
+  if (over) document.querySelectorAll(".projection").forEach(el => { el.hidden = true; });
+  else renderProjection(league, stats);
+}
+
+function renderBanner(league, stats, rows) {
+  const winners = rows.filter(r => r.place === 1);
+  const names = winners.map(r => esc(r.manager)).join(" and ");
+  const runnerUp = rows.find(r => r.place > 1);
+  document.getElementById("banner").innerHTML = `
+    <div class="banner">
+      <div class="trophy" aria-hidden="true">🏆</div>
+      <div>
+        <div class="banner-title">${names} ${winners.length > 1 ? "share" : "wins"} the ${seasonLabel(stats.season)} ${esc(league.name)}</div>
+        <div class="muted">${winners[0].total} points${runnerUp ? ` · runner-up ${esc(runnerUp.manager)} ${runnerUp.total}` : ""}${
+          finalPreview() ? " · preview, the season isn't over yet" : ""}</div>
+      </div>
+    </div>`;
 }
 
 // Final standings if everyone keeps their current pace, playoff picks included.

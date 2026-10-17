@@ -162,6 +162,15 @@ function projectStats(stats) {
   return proj;
 }
 
+// The regular season is over once every team has played 82 games. Add ?final to
+// the address to preview the end-of-season view.
+function finalPreview() {
+  return typeof location !== "undefined" && new URLSearchParams(location.search).has("final");
+}
+function seasonOver(stats) {
+  return finalPreview() || (stats.teams.length > 0 && stats.teams.every(t => t.gp >= SEASON_GAMES));
+}
+
 // 2 points per playoff pick that's in a playoff spot
 function playoffPoints(league, teams) {
   const inSpot = new Set(teams.filter(t => t.inPlayoffs).map(t => t.abbrev));

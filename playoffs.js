@@ -41,7 +41,9 @@ function render(league, stats) {
   const scores = playoffScores(league, stats);
   const anyPicks = scores.some(s => s.teams.length);
   document.getElementById("meta").textContent =
-    `${seasonLabel(stats.season)} · if the season ended today · stats updated ${new Date(stats.updated).toLocaleString()}`;
+    seasonOver(stats)
+      ? `${seasonLabel(stats.season)} · final: these teams made the playoffs`
+      : `${seasonLabel(stats.season)} · if the season ended today · stats updated ${new Date(stats.updated).toLocaleString()}`;
 
   if (!anyPicks) {
     document.getElementById("summary").innerHTML = `<p class="muted">No playoff picks entered yet.</p>`;

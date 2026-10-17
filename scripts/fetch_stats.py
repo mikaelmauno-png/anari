@@ -8,6 +8,7 @@ Writes:
   data/history/index.json    list of the weekly snapshot dates
   data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
   data/schedule.json         regular-season games in the next 7 days
+  data/seasons/<season>/     final stats and league file, saved once the regular season ends
 
 Runs on a schedule in GitHub Actions (the NHL API and MoneyPuck don't allow
 direct browser requests). Standard library only.
@@ -365,6 +366,23 @@ def write_schedule():
                {"updated": now_iso(), "from": start, "to": end, "games": games})
 
 
+def archive_finished_season(league):
+    """Once every team has played 82 games, keep a permanent copy of the final
+    stats and the league file (picks, cap hits) for that season."""
+    stats = read_json(os.path.join(DATA, "stats.json"))
+    if not stats["teams"] or any(t["gp"] < 82 for t in stats["teams"]):
+        return
+    folder = os.path.join(DATA, "seasons", str(stats["season"]))
+    if os.path.exists(os.path.join(folder, "stats.json")):
+        return
+    write_json(os.path.join(folder, "stats.json"), stats)
+    write_json(os.path.join(folder, "league.json"), league)
+    caps = read_json(os.path.join(DATA, "caphits.json"))
+    if caps:
+        write_json(os.path.join(folder, "caphits.json"), caps)
+    print(f"archived final {stats['season']} season")
+
+
 # ---------- cap hits ----------
 
 def norm(name):
@@ -478,6 +496,7 @@ def main():
     write_last_night(f)
     write_weekly_snapshots(f)
     write_schedule()
+    archive_finished_season(league)
     try:
         write_cap_lookups(league)
     except Exception as e:  # a CapFreeze hiccup shouldn't stop the stats update

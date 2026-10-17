@@ -20,6 +20,10 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 - **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
 
+- **Next season** (`draft.html`, linked from the footers): each manager clicks their picks for next season and shares a summary to be entered into `league.json`. Choices are saved on that device.
+
+**End of season:** once every team has played 82 games, the standings switch to final: playoff picks (2 points per team that made it) are added to the totals, the projection is hidden, and a winner banner appears. The fetch script also archives the final stats and league file in `data/seasons/<season>/`. Add `?final` to the standings address to preview it.
+
 ## Editing picks
 
 Edit `league.json`. A pick can be:

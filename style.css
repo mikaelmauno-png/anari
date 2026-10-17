@@ -99,3 +99,9 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
   table.standings.tight .place { padding-left: 6px; }
   table.standings.tight .total { padding: 8px 4px; }
 }
+
+/* End-of-season winner banner */
+.banner { display: flex; gap: 14px; align-items: center; margin-top: 16px; padding: 14px 16px; border-radius: 12px;
+  background: var(--accent-soft); border: 1px solid var(--line); }
+.banner .trophy { font-size: 34px; line-height: 1; }
+.banner-title { font-size: 18px; font-weight: 700; }
