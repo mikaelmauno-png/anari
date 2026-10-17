@@ -20,7 +20,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 - **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
 
-- **Next season** (`draft.html`, linked from the footers): each manager clicks their picks for next season and shares a summary to be entered into `league.json`. Choices are saved on that device.
+- **Next season** (`draft.html`, linked from the footers): the next-season draft. Each manager ranks where they want the 1st pick, gives 4 ranked choices per category, and picks 8 + 8 playoff teams, then shares a summary. Submissions go into `draft` in `league.json`. The order is last season's final standings reversed: over two rounds each manager claims the 1st pick in their highest-ranked free category, and the rest of each category's order continues around that list (everyone picks 1st, 2nd, 3rd and 4th twice). In each category everyone gets their highest choice nobody ahead took; within a category no two managers share a pick.
 
 **End of season:** once every team has played 82 games, the standings switch to final: playoff picks (2 points per team that made it) are added to the totals, the projection is hidden, and a winner banner appears. A tie for first goes to whoever won the most categories, and is shared if that's level too. The fetch script also archives the final stats and league file in `data/seasons/<season>/`. Add `?final` to the standings address to preview it.
 

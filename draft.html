@@ -16,17 +16,23 @@
     #managers { display: flex; flex-wrap: wrap; gap: 8px; }
     button { font: inherit; color: var(--text); background: var(--card); border: 1px solid var(--line); border-radius: 8px; padding: 8px 14px; cursor: pointer; }
     button[aria-pressed="true"] { background: var(--accent-soft); border-color: var(--accent); color: var(--accent); font-weight: 600; }
+    #order p { margin: 0 0 6px; }
     #form { display: grid; gap: 12px; margin-top: 12px; }
     .card h4 { margin: 12px 0 6px; font-size: 12px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-    .field { display: block; padding: 8px 0; border-top: 1px solid var(--line); }
-    .field:first-of-type { border-top: 0; }
-    .lbl { display: block; font-weight: 600; margin-bottom: 4px; }
-    .lbl small { font-weight: 400; color: var(--muted); }
-    input[type=text] { width: 100%; font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 9px 10px; }
+    .cat-pick { display: flex; flex-wrap: wrap; gap: 6px; }
+    .cat-btn { padding: 7px 10px; font-size: 14px; }
+    .rankno { display: inline-block; min-width: 18px; margin-right: 6px; border-radius: 9px; background: var(--accent); color: var(--card); font-size: 12px; text-align: center; }
+    fieldset.cat { border: 0; border-top: 1px solid var(--line); margin: 0; padding: 10px 0 4px; }
+    fieldset.cat legend { font-weight: 600; padding: 0; }
+    fieldset.cat legend small { font-weight: 400; color: var(--muted); }
+    label.choice { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+    .ord { width: 30px; color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    input[type=text] { flex: 1; min-width: 0; font: inherit; font-size: 16px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; }
     input[type=text]:focus { outline: 2px solid var(--accent); outline-offset: -1px; }
-    .hint-line { display: block; color: var(--muted); font-size: 12px; margin-top: 4px; min-height: 1em; }
+    .hint-line { display: block; color: var(--muted); font-size: 12px; margin: 2px 0 0 38px; }
+    .hint-line:empty { display: none; }
     .teams-pick { display: grid; grid-template-columns: repeat(auto-fill, minmax(58px, 1fr)); gap: 6px; }
-    .team-btn { padding: 8px 0; font-size: 13px; font-variant-numeric: tabular-nums; }
+    .team-btn { padding: 8px 0; font-size: 13px; }
     pre.summary { white-space: pre-wrap; font: 13px/1.5 ui-monospace, SFMono-Regular, Menlo, monospace; background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 10px; margin: 0 0 8px; user-select: all; }
     .actions { display: flex; gap: 8px; align-items: center; }
   </style>
@@ -39,6 +45,9 @@
       <div id="meta">Loading…</div>
     </header>
 
+    <h2>Draft order</h2>
+    <div id="order" class="card"></div>
+
     <h2>Who's picking?</h2>
     <div id="managers"></div>
 
@@ -47,8 +56,11 @@
     <h2>Summary</h2>
     <div id="summary"></div>
 
+    <h2>Draft results</h2>
+    <div id="results"></div>
+
     <footer>
-      Player suggestions are this season's NHL players; for prospects who haven't played yet, type the name.
+      Player suggestions are this season's NHL players; for prospects who haven't played yet, type the name. Within a category no two managers get the same pick; the same player can still go in different categories.
     </footer>
   </main>
   <script>

@@ -184,6 +184,70 @@ function rankFinal(league, rows) {
   return rows;
 }
 
+// ---------- next-season draft ----------
+//
+// Each manager submits (league.draft[manager]):
+//   firstPicks: the 8 category keys, most wanted first, for claiming 1st pick
+//   choices:    { category: [1st, 2nd, 3rd, 4th choice] }
+//   playoffs:   8 East + 8 West team abbreviations (not drafted, overlap is fine)
+// The order comes from last season's final standings, reversed (last place first).
+
+// Managers from last place to first, using the final ranking (tie for first
+// broken by category wins); any remaining tie keeps the league.json order.
+function draftOrder(league, stats) {
+  const { table } = computeStandings(league, stats);
+  const po = playoffPoints(league, stats.teams);
+  const rows = rankFinal(league, table.map(r => ({ ...r, total: r.total + (po[r.manager] || 0) })));
+  const idx = m => league.managers.indexOf(m);
+  return rows.slice().sort((a, b) => b.place - a.place || idx(a.manager) - idx(b.manager)).map(r => r.manager);
+}
+
+// Two rounds, last place first: each manager claims their highest-ranked
+// category nobody has claimed yet and picks 1st in it. The rest of that
+// category's order continues around the reverse standings, so everyone picks
+// 1st, 2nd, 3rd and 4th exactly twice.
+function categoryOrders(league, reverse) {
+  const draft = league.draft || {};
+  const claimed = {};
+  for (let round = 0; round < 2; round++) {
+    for (const m of reverse) {
+      const wanted = [...((draft[m] || {}).firstPicks || []), ...CATEGORIES.map(c => c.key)];
+      const key = wanted.find(k => CATEGORIES.some(c => c.key === k) && !claimed[k]);
+      if (key) claimed[key] = m;
+    }
+  }
+  return Object.fromEntries(CATEGORIES.map(c => {
+    const start = reverse.indexOf(claimed[c.key]);
+    return [c.key, reverse.map((_, i) => reverse[(start + i) % reverse.length])];
+  }));
+}
+
+// In pick order, each manager gets their highest choice that's still available.
+function runDraft(league, stats) {
+  const reverse = draftOrder(league, stats);
+  const orders = categoryOrders(league, reverse);
+  const draft = league.draft || {};
+  const results = CATEGORIES.map(cat => {
+    const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
+    const taken = new Set();
+    // Same player whether written "McDavid", "Connor McDavid" or "Connor McDavid (EDM)"
+    const keyOf = choice => {
+      const { item } = resolve(choice, pool, cat.kind, cat.check);
+      return item ? `id:${item.id || item.abbrev}` : `name:${norm(String(choice))}`;
+    };
+    const picks = orders[cat.key].map((m, i) => {
+      const choices = (((draft[m] || {}).choices || {})[cat.key] || []).filter(Boolean);
+      if (!draft[m]) return { manager: m, slot: i + 1, waiting: true };
+      const n = choices.findIndex(c => !taken.has(keyOf(c)));
+      if (n < 0) return { manager: m, slot: i + 1, pick: null, choices };
+      taken.add(keyOf(choices[n]));
+      return { manager: m, slot: i + 1, pick: choices[n], choiceNo: n + 1, choices };
+    });
+    return { cat, picks };
+  });
+  return { reverse, orders, results };
+}
+
 // 2 points per playoff pick that's in a playoff spot
 function playoffPoints(league, teams) {
   const inSpot = new Set(teams.filter(t => t.inPlayoffs).map(t => t.abbrev));
