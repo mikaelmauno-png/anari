@@ -92,3 +92,5 @@ nav.tabs a[aria-current="page"] { background: var(--accent-soft); color: var(--a
   nav.tabs { width: 100%; }
   nav.tabs a { flex: 1; text-align: center; padding: 6px 4px; font-size: 13px; }
 }
+
+.gap { color: var(--muted); font-size: 12px; }

@@ -32,6 +32,7 @@ function render(league, stats) {
           <li class="${e.points ? "scored" : ""}">
             <span class="pl">${e.tied ? "T" : ""}${e.place}</span>
             <span class="who"><b>${esc(e.manager)}</b><span class="pick">${pickLabel(cat, e)}</span>
+              ${e.gap ? `<span class="gap">${e.gap}</span>` : ""}
               ${e.warnings.map(w => `<span class="warn">⚠ ${esc(w)}</span>`).join("")}</span>
             <span class="val">${fmtValue(cat, e)}</span>
             <span class="pts">${e.points ? "+" + e.points : "0"}</span>
@@ -42,6 +43,34 @@ function render(league, stats) {
         : "Best possible pick: no data"}</p>
       ${candidates ? renderCandidates(league, candidates, capWarnings, stats) : ""}
     </section>`).join("");
+
+  renderProjection(league, stats);
+}
+
+// Final standings if everyone keeps their current pace, playoff picks included.
+function renderProjection(league, stats) {
+  const proj = projectStats(stats);
+  const { table } = computeStandings(league, proj);
+  const po = playoffPoints(league, proj.teams);
+  const rows = table.map(r => ({ ...r, po: po[r.manager] || 0, final: r.total + (po[r.manager] || 0) }))
+    .sort((a, b) => b.final - a.final);
+  const place = r => 1 + rows.filter(o => o.final > r.final).length;
+  const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
+  document.getElementById("projection").innerHTML = `
+    <div class="scroll"><table class="standings">
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${head}<th title="Playoff picks, 2 per team in">PO</th></tr></thead>
+      <tbody>${rows.map(r => `
+        <tr>
+          <td class="place">${place(r)}</td>
+          <th scope="row" class="mgr">${esc(r.manager)}</th>
+          <td class="total">${r.final}</td>
+          ${CATEGORIES.map(c => `<td class="${r.byCat[c.key] ? "" : "zero"}">${r.byCat[c.key]}</td>`).join("")}
+          <td>${r.po}</td>
+        </tr>`).join("")}</tbody>
+    </table></div>
+    <p class="hint">Every pick's stats at their current pace over ${SEASON_GAMES} games (team games played so far:
+      ${Math.min(...stats.teams.map(t => t.gp))}–${Math.max(...stats.teams.map(t => t.gp))}).
+      <b>PO</b> = playoff picks, 2 points per team in a playoff spot by projected points. Early in the season this moves a lot.</p>`;
 }
 
 function renderLookups(league, stats) {

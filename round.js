@@ -88,6 +88,43 @@ function renderNight(league, stats, night) {
     <ul class="scores card">${games}</ul>`;
 }
 
+// Games each manager's picks play in the next 7 days (one row per player,
+// even if he was picked in several categories).
+function renderWeekAhead(league, stats, schedule) {
+  const games = {};
+  for (const g of schedule.games) for (const t of [g.away, g.home]) games[t] = (games[t] || 0) + 1;
+  const cards = league.managers.map(m => {
+    const rows = new Map();
+    for (const cat of CATEGORIES) {
+      for (const pick of (league.picks[cat.key] || {})[m] || []) {
+        const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
+        const { item } = resolve(pick, pool, cat.kind, cat.check);
+        if (!item) continue;
+        const team = cat.kind === "team" ? item.abbrev : item.team;
+        const key = `${cat.kind}:${item.id || item.abbrev}`;
+        if (!rows.has(key)) rows.set(key, { name: item.name, team, cats: [], n: games[team] || 0 });
+        rows.get(key).cats.push(SHORT[cat.key]);
+      }
+    }
+    const list = [...rows.values()].sort((a, b) => b.n - a.n);
+    const total = list.reduce((s, r) => s + r.n, 0);
+    return { m, list, total };
+  });
+  const most = Math.max(...cards.map(c => c.total));
+  document.getElementById("ahead-title").textContent =
+    `Next 7 days · ${fmtDay(schedule.from, { day: "numeric", month: "short" })}–${fmtDay(schedule.to, { day: "numeric", month: "short" })}`;
+  document.getElementById("ahead").innerHTML = `<div class="grid">${cards.map(c => `
+    <section class="card">
+      <h3><span class="swatch" style="background:${managerColor(league, c.m)}"></span>${esc(c.m)}
+        <span class="muted">· ${c.total} games${c.total === most ? " · most" : ""}</span></h3>
+      <ul class="lines">${c.list.map(r => `
+        <li><span><b>${esc(r.name)}</b> ${r.team && r.team !== r.name ? `<small>${esc(r.team)}</small>` : ""}
+          <small class="cats">${r.cats.join(" · ")}</small></span>
+          <span class="val ${r.n >= 4 ? "up" : r.n <= 2 ? "muted" : ""}">${r.n} game${r.n === 1 ? "" : "s"}</span></li>`).join("")}</ul>
+    </section>`).join("")}</div>
+    <p class="hint">Games each pick's team plays; a goalie won't start all of them. Four-game weeks are highlighted.</p>`;
+}
+
 // Fantasy score change between two moments. `from` may be null (season start).
 function renderChange(el, league, from, to) {
   const before = from ? computeStandings(league, from).table : null;
@@ -119,12 +156,14 @@ function renderChange(el, league, from, to) {
 
 async function main() {
   try {
-    const [league, stats, night, index] = await Promise.all([
+    const [league, stats, night, index, schedule] = await Promise.all([
       loadLeague(), loadJSON("data/stats.json"),
       loadJSON("data/lastnight.json"), loadJSON("data/history/index.json"),
+      loadJSON("data/schedule.json").catch(() => null),
     ]);
     document.getElementById("meta").textContent = `${seasonLabel(stats.season)} regular season`;
     renderNight(league, stats, night);
+    if (schedule && schedule.from) renderWeekAhead(league, stats, schedule);
 
     const [prev, last] = [index[index.length - 2], index[index.length - 1]];
     const snaps = await Promise.all([prev, last].map(d => d ? loadJSON(`data/history/${d}.json`) : null));

@@ -7,6 +7,7 @@ Writes:
   data/history/<date>.json   season totals through each Sunday (weekly chart)
   data/history/index.json    list of the weekly snapshot dates
   data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
+  data/schedule.json         regular-season games in the next 7 days
 
 Runs on a schedule in GitHub Actions (the NHL API and MoneyPuck don't allow
 direct browser requests). Standard library only.
@@ -339,6 +340,31 @@ def write_weekly_snapshots(f):
         write_json(index_path, sorted(index))
 
 
+def write_schedule():
+    """Unplayed regular-season games over the next 7 days, starting from the
+    first game that hasn't finished yet."""
+    games, day, start = [], "now", None
+    for _ in range(3):  # each response covers one week
+        week = json.loads(get(f"{WEB_API}/schedule/{day}"))
+        for d in week["gameWeek"]:
+            for g in d["games"]:
+                if g["gameType"] != 2 or g["gameState"] in FINAL_STATES:
+                    continue
+                start = start or d["date"]
+                games.append({"date": d["date"], "away": g["awayTeam"]["abbrev"],
+                              "home": g["homeTeam"]["abbrev"], "start": g["startTimeUTC"]})
+        day = week.get("nextStartDate")
+        if not day or (start and day > (date.fromisoformat(start) + timedelta(days=6)).isoformat()):
+            break
+    if start:
+        end = (date.fromisoformat(start) + timedelta(days=6)).isoformat()
+        games = [g for g in games if g["date"] <= end]
+    else:
+        end = None
+    write_json(os.path.join(DATA, "schedule.json"),
+               {"updated": now_iso(), "from": start, "to": end, "games": games})
+
+
 # ---------- cap hits ----------
 
 def norm(name):
@@ -451,6 +477,7 @@ def main():
     write_current(f)
     write_last_night(f)
     write_weekly_snapshots(f)
+    write_schedule()
     try:
         write_cap_lookups(league)
     except Exception as e:  # a CapFreeze hiccup shouldn't stop the stats update

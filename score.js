@@ -103,7 +103,70 @@ function scoreCategory(cat, league, stats) {
     e.tied = entries.some(o => o !== e && compareEntries(o, e) === 0);
     e.points = league.scoring[e.place - 1] || 0;
   }
+  for (const e of entries) {
+    // The closest entry strictly ahead
+    const ahead = entries.filter(o => compareEntries(o, e) < 0).pop();
+    e.gap = ahead ? gapText(cat, e, ahead) : null;
+  }
   return entries;
+}
+
+const fmtNum = (v, d = 0) => (Math.round(v * 10 ** d) / 10 ** d).toFixed(d);
+
+// How far an entry is behind the one directly ahead of it, in the category's terms.
+function gapText(cat, e, ahead) {
+  if (!e.item || !ahead.item) return null;
+  const who = esc(ahead.manager);
+  if (cat.kind === "team") {
+    const d = ahead.item.pts - e.item.pts;
+    return d > 0 ? `${fmtNum(d)} pt${d === 1 ? "" : "s"} behind ${who}` : `level on points with ${who}, behind on tiebreak`;
+  }
+  if (cat.key === "value") {
+    if (!e.cap || ahead.value === -Infinity) return null;
+    // Points needed at the same cap hit to get under the € per point ahead
+    const need = Math.floor(e.cap / -ahead.value + 1e-9) + 1 - e.item.p;
+    return need > 0 ? `${fmtNum(need)} more point${need === 1 ? "" : "s"} to pass ${who}` : null;
+  }
+  const d = ahead.value - e.value;
+  if (d > 1e-9) return `${fmtNum(d, cat.decimals || 0)} ${cat.unit} behind ${who}`;
+  if (cat.tiebreak) return `level on ${cat.unit} with ${who}, ${fmtNum(ahead.tb - e.tb)} G behind on tiebreak`;
+  return null;
+}
+
+// ---------- projection ----------
+
+const SEASON_GAMES = 82;
+
+// Season totals at the current pace: every stat scaled by 82 / team games played,
+// so missed games count against a player. The playoff picture is redrawn from
+// projected points (top 3 per division, then 2 wildcards per conference).
+function projectStats(stats) {
+  const proj = JSON.parse(JSON.stringify(stats));
+  const teamGp = Object.fromEntries(proj.teams.map(t => [t.abbrev, t.gp]));
+  const factor = team => teamGp[team] ? SEASON_GAMES / teamGp[team] : 0;
+  for (const s of proj.skaters) {
+    const f = factor(s.team);
+    s.g *= f; s.p *= f; s.pim *= f;
+  }
+  for (const g of proj.goalies) g.gsax *= factor(g.team);
+  for (const t of proj.teams) t.pts = t.gp ? t.pts * SEASON_GAMES / t.gp : 0;
+  proj.teams.sort((a, b) => b.pts - a.pts || b.ptsPct - a.ptsPct);
+  proj.teams.forEach((t, i) => { t.rank = i + 1; t.inPlayoffs = false; });
+  for (const conf of new Set(proj.teams.map(t => t.conf))) {
+    const inConf = proj.teams.filter(t => t.conf === conf);
+    for (const div of new Set(inConf.map(t => t.div))) {
+      inConf.filter(t => t.div === div).slice(0, 3).forEach(t => { t.inPlayoffs = true; });
+    }
+    inConf.filter(t => !t.inPlayoffs).slice(0, 2).forEach(t => { t.inPlayoffs = true; });
+  }
+  return proj;
+}
+
+// 2 points per playoff pick that's in a playoff spot
+function playoffPoints(league, teams) {
+  const inSpot = new Set(teams.filter(t => t.inPlayoffs).map(t => t.abbrev));
+  return Object.fromEntries(league.managers.map(m =>
+    [m, ((league.playoffs || {})[m] || []).filter(a => inSpot.has(String(a).toUpperCase())).length * 2]));
 }
 
 // Cap hits come from two places: data/caphits.json, looked up on CapFreeze a few
