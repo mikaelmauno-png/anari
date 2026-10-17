@@ -14,10 +14,10 @@
     "value":      { "Mauno": ["Zuccarello"], "Nynny": ["Formenton"], "Atte": ["Svechkov"],            "Santeri": ["Jackson Blake"] }
   },
   "playoffs": {
-    "Mauno": [],
-    "Nynny": [],
-    "Atte": [],
-    "Santeri": []
+    "Mauno": ["BUF", "CAR", "FLA", "MTL", "NJD", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "LAK", "MIN", "VGK"],
+    "Nynny": ["BUF", "CAR", "FLA", "MTL", "NJD", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "MIN", "SJS", "UTA", "VGK"],
+    "Atte": ["CAR", "FLA", "MTL", "OTT", "PHI", "TBL", "TOR", "WSH",  "ANA", "COL", "DAL", "EDM", "MIN", "SJS", "UTA", "VGK"],
+    "Santeri": ["BUF", "CAR", "FLA", "MTL", "NJD", "OTT", "TBL", "WSH",  "ANA", "COL", "DAL", "EDM", "LAK", "MIN", "UTA", "VGK"]
   },
   "minCap": 0.85,
   "capHits": {
