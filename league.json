@@ -1,0 +1,23 @@
+{
+  "name": "Änäri",
+  "season": 20262027,
+  "scoring": [5, 3, 2, 1],
+  "managers": ["Mauno", "Nynny", "Atte", "Santeri"],
+  "picks": {
+    "goals":      { "Mauno": ["McDavid"],    "Nynny": ["Kaprizov"],  "Atte": ["MacKinnon"],           "Santeri": ["Caufield"] },
+    "points":     { "Mauno": ["McDavid"],    "Nynny": ["Celebrini"], "Atte": ["Kucherov"],            "Santeri": ["MacKinnon"] },
+    "finnish":    { "Mauno": ["Heiskanen"],  "Nynny": ["Barkov"],    "Atte": ["Sebastian Aho (CAR)"], "Santeri": ["Rantanen"] },
+    "gsax":       { "Mauno": ["Sorokin"],    "Nynny": ["Swayman"],   "Atte": ["Vasilevskiy"],         "Santeri": ["Logan Thompson"] },
+    "pim":        { "Mauno": ["Zadorov"],    "Nynny": ["McCarron"],  "Atte": ["Kastelic"],            "Santeri": ["Tom Wilson"] },
+    "rookies":    { "Mauno": ["Stenberg"],   "Nynny": ["Helenius"],  "Atte": ["McKenna"],             "Santeri": ["Martone"] },
+    "presidents": { "Mauno": ["CAR"],        "Nynny": ["FLA"],       "Atte": ["DAL"],                 "Santeri": ["COL"] },
+    "value":      { "Mauno": ["Zuccarello"], "Nynny": ["Formenton"], "Atte": ["Svechkov"],            "Santeri": ["Jackson Blake"] }
+  },
+  "minCap": 0.85,
+  "capHits": {
+    "Zuccarello": 1.0,
+    "Formenton": 0.85,
+    "Svechkov": 1.25,
+    "Jackson Blake": 5.117
+  }
+}

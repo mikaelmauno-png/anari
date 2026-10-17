@@ -1,0 +1,7 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect width="512" height="512" rx="96" fill="#0f172a"/>
+  <ellipse cx="256" cy="330" rx="150" ry="46" fill="#2563eb"/>
+  <rect x="106" y="284" width="300" height="46" fill="#2563eb"/>
+  <ellipse cx="256" cy="284" rx="150" ry="46" fill="#60a5fa"/>
+  <text x="256" y="215" text-anchor="middle" font-family="Helvetica, Arial, sans-serif" font-weight="700" font-size="150" fill="#f8fafc">Ä</text>
+</svg>
