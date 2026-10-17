@@ -10,7 +10,8 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Änäri">
-  <link rel="stylesheet" href="style.css">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
   <style>
     .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; margin-bottom: 8px; }
     .plot { position: relative; }

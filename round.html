@@ -10,7 +10,8 @@
   <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-title" content="Änäri">
-  <link rel="stylesheet" href="style.css">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
   <style>
     ul.lines { list-style: none; margin: 0; padding: 0; }
     ul.lines li { display: flex; justify-content: space-between; gap: 12px; padding: 7px 0; border-top: 1px solid var(--line); }
