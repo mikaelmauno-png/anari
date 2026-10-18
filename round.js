@@ -57,12 +57,18 @@ function nightForManager(league, stats, night, manager) {
   return { rows: [...rows.values()], idle: [...idle] };
 }
 
+const FLIPPED_KEY = "anari-flipped";  // { date, managers: [...] } for the last game night
+
 function renderNight(league, stats, night) {
+  const revealAll = getSettings().cards === "revealed";
+  const seen = readStore(FLIPPED_KEY, {});
+  const turned = new Set(seen.date === night.date ? seen.managers || [] : []);
   const managers = league.managers.map(m => {
+    const open = revealAll || turned.has(m);
     const { rows, idle } = nightForManager(league, stats, night, m);
     // Face down until tapped: the front only shows whose card it is
     return `
-      <div class="flip" role="button" tabindex="0" aria-expanded="false" aria-label="Turn ${esc(m)}'s card">
+      <div class="flip${open ? " open" : ""}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
        <div class="flip-inner">
         <section class="card face-down" style="--mc:${managerColor(league, m)}">
           <span class="fd-name">${esc(m)}</span>
@@ -92,8 +98,8 @@ function renderNight(league, stats, night) {
 
   document.getElementById("night-title").textContent = `Last game night · ${fmtDay(night.date)}`;
   document.getElementById("night").innerHTML = `
-    <p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>
-    <div class="grid">${managers}</div>
+    ${revealAll || turned.size === league.managers.length ? "" : `<p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>`}
+    <div class="grid no-anim">${managers}</div>
     <h3 class="sub">Scores</h3>
     <ul class="scores card">${games}</ul>`;
 }
@@ -128,11 +134,19 @@ function renderChange(el, league, from, to) {
 }
 
 // Tap (or Enter/Space) turns a card; "Turn all" turns every card face up
-function setupFlips() {
-  const turn = el => { el.classList.add("open"); el.setAttribute("aria-expanded", "true"); };
+function setupFlips(nightDate) {
   const night = document.getElementById("night");
+  // Cards already turned show without the animation; later taps animate
+  requestAnimationFrame(() => requestAnimationFrame(() => night.querySelector(".no-anim")?.classList.remove("no-anim")));
+  const turn = el => {
+    el.classList.add("open");
+    el.setAttribute("aria-expanded", "true");
+    const seen = readStore(FLIPPED_KEY, {});
+    const list = seen.date === nightDate ? seen.managers || [] : [];
+    if (!list.includes(el.dataset.m)) writeStore(FLIPPED_KEY, { date: nightDate, managers: [...list, el.dataset.m] });
+  };
   night.addEventListener("click", e => {
-    if (e.target.id === "turn-all") { night.querySelectorAll(".flip").forEach(turn); return; }
+    if (e.target.id === "turn-all") { night.querySelectorAll(".flip").forEach(turn); e.target.parentElement.remove(); return; }
     const card = e.target.closest(".flip");
     if (card) turn(card);
   });
@@ -150,7 +164,7 @@ async function main() {
     ]);
     document.getElementById("meta").textContent = `${seasonLabel(stats.season)} regular season`;
     renderNight(league, stats, night);
-    setupFlips();
+    setupFlips(night.date);
 
     const [prev, last] = [index[index.length - 2], index[index.length - 1]];
     const snaps = await Promise.all([prev, last].map(d => d ? loadJSON(`data/history/${d}.json`) : null));

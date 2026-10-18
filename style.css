@@ -124,3 +124,7 @@ table.fixed th.po { width: 44px; }
   table.fixed th.po { width: 24px; }
   table.fixed thead th { font-size: 9px; letter-spacing: -0.02em; overflow: hidden; text-overflow: clip; }
 }
+
+/* Settings gear: icon-only last tab */
+nav.tabs a.gear { display: inline-flex; align-items: center; justify-content: center; }
+@media (max-width: 560px) { nav.tabs a.gear { flex: 0 0 auto; padding: 6px 8px; } }

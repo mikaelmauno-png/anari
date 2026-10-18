@@ -369,6 +369,24 @@ const seasonLabel = season => `${String(season).slice(0, 4)}–${String(season).
 const fmtDay = (iso, opts = { weekday: "short", day: "numeric", month: "short" }) =>
   new Date(iso + "T12:00:00").toLocaleDateString("en-GB", opts);
 
+// Per-device settings and small bits of remembered state (localStorage can be
+// unavailable, e.g. in private mode, so every access is guarded)
+const SETTINGS_KEY = "anari-settings";
+const SETTING_DEFAULTS = { cards: "hidden" };  // last game night cards: "hidden" | "revealed"
+function getSettings() {
+  try { return { ...SETTING_DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") }; }
+  catch { return { ...SETTING_DEFAULTS }; }
+}
+function setSetting(key, value) {
+  try { localStorage.setItem(SETTINGS_KEY, JSON.stringify({ ...getSettings(), [key]: value })); } catch { /* not saved */ }
+}
+function readStore(key, fallback) {
+  try { return JSON.parse(localStorage.getItem(key)) ?? fallback; } catch { return fallback; }
+}
+function writeStore(key, value) {
+  try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* not saved */ }
+}
+
 // league.json plus the cap hits looked up so far (missing file is fine)
 async function loadLeague() {
   const [league, caps] = await Promise.all([
