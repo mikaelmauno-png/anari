@@ -222,6 +222,16 @@ async function main() {
     const saved = load();
     if (saved && saved.picks) state = saved;
     if (state.manager && !league.managers.includes(state.manager)) state.manager = null;
+    if (!seasonOver(stats)) {
+      const left = stats.teams.reduce((s, t) => s + Math.max(0, SEASON_GAMES - t.gp), 0) / 2;
+      document.getElementById("meta").textContent = `Draft for the ${seasonLabel(ctx.nextSeason)} season`;
+      document.querySelector("main").innerHTML = document.querySelector("header").outerHTML + `
+        <section class="card" style="margin-top:20px">
+          <h3>The draft opens when the regular season ends</h3>
+          <p class="muted">About ${Math.round(left)} regular-season games to go. The draft order depends on the final standings.</p>
+        </section>`;
+      return;
+    }
     document.addEventListener("click", onClick);
     document.addEventListener("input", onInput);
     render();

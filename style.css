@@ -109,3 +109,18 @@ table.standings .po { border-right: 1px solid var(--line); }
 
 /* Five tabs on a phone: "Last round" / "Next round" shorten to "Last" / "Next" */
 @media (max-width: 560px) { nav.tabs .wide { display: none; } }
+
+/* Standings-style tables: fixed side columns, the 8 category columns share
+   the rest equally (otherwise G and P get squeezed next to GSAx and PRES) */
+table.fixed { table-layout: fixed; }
+table.fixed th:first-child { width: 32px; }
+table.fixed th.mgr { width: 110px; }
+table.fixed th.tot { width: 60px; }
+table.fixed th.po { width: 44px; }
+@media (max-width: 560px) {
+  table.fixed th:first-child { width: 20px; }
+  table.fixed th.mgr { width: 62px; }
+  table.fixed th.tot { width: 36px; }
+  table.fixed th.po { width: 26px; }
+  table.fixed thead th { letter-spacing: -0.03em; overflow: hidden; text-overflow: clip; }
+}

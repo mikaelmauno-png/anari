@@ -7,6 +7,7 @@ function render(league, stats) {
   const updated = new Date(stats.updated);
   const season = String(stats.season);
   const over = seasonOver(stats);
+  showDraftLinks(stats);
   document.getElementById("meta").textContent = over
     ? `${seasonLabel(stats.season)} regular season · final standings`
     : `${seasonLabel(stats.season)} regular season · stats updated ${updated.toLocaleString()}`;
@@ -20,8 +21,8 @@ function render(league, stats) {
   }
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("standings").innerHTML = `
-    <div class="scroll"><table class="standings${over ? " tight" : ""}">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th>${over ? `<th class="po" title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
+    <div class="scroll"><table class="standings fixed${over ? " tight" : ""}">
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th class="tot">Total</th>${over ? `<th class="po" title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
       <tbody>${rows.map(r => `
         <tr>
           <td class="place">${r.place}</td>
@@ -88,8 +89,8 @@ function renderProjection(league, stats) {
   const place = r => r.place;
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
   document.getElementById("projection").innerHTML = `
-    <div class="scroll"><table class="standings tight">
-      <thead><tr><th>#</th><th class="mgr">Manager</th><th>Total</th><th class="po" title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
+    <div class="scroll"><table class="standings fixed tight">
+      <thead><tr><th>#</th><th class="mgr">Manager</th><th class="tot">Total</th><th class="po" title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
       <tbody>${rows.map(r => `
         <tr>
           <td class="place">${place(r)}</td>

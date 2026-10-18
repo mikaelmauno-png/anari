@@ -248,6 +248,12 @@ function runDraft(league, stats) {
   return { reverse, orders, results };
 }
 
+// The next-season draft opens once the regular season is over
+function showDraftLinks(stats) {
+  if (!seasonOver(stats)) return;
+  document.querySelectorAll(".draft-link").forEach(el => { el.hidden = false; });
+}
+
 // 2 points per playoff pick that's in a playoff spot
 function playoffPoints(league, teams) {
   const inSpot = new Set(teams.filter(t => t.inPlayoffs).map(t => t.abbrev));

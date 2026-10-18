@@ -39,6 +39,7 @@ function playoffScores(league, stats) {
 
 function render(league, stats) {
   const scores = playoffScores(league, stats);
+  showDraftLinks(stats);
   const anyPicks = scores.some(s => s.teams.length);
   document.getElementById("meta").textContent =
     seasonOver(stats)
