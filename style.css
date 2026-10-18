@@ -122,5 +122,5 @@ table.fixed th.po { width: 44px; }
   table.fixed th.mgr { width: 58px; }
   table.fixed th.tot { width: 32px; }
   table.fixed th.po { width: 24px; }
-  table.fixed thead th { letter-spacing: -0.03em; overflow: hidden; text-overflow: clip; }
+  table.fixed thead th { font-size: 9px; letter-spacing: -0.02em; overflow: hidden; text-overflow: clip; }
 }
