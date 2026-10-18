@@ -25,6 +25,22 @@
     tr.has-moves > * { border-bottom: 0; padding-bottom: 2px; }
     tr.moves td { text-align: left; white-space: normal; padding-top: 0; }
     .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 6px; margin: 1px 2px; border-radius: 6px; border: 1px solid currentColor; }
+    /* Face-down manager cards on the last game night: tap to turn */
+    .flip { perspective: 1200px; cursor: pointer; border-radius: 12px; }
+    .flip:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .flip-inner { display: grid; transition: transform 0.6s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; height: 100%; }
+    .flip.open .flip-inner { transform: rotateY(180deg); }
+    .flip.open { cursor: default; }
+    .flip-inner > .card { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+    .face-up { transform: rotateY(180deg); }
+    .face-down { display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; min-height: 140px;
+      border-top: 6px solid var(--mc);
+      background: repeating-linear-gradient(135deg, var(--card) 0 10px, color-mix(in srgb, var(--mc) 12%, var(--card)) 10px 20px); }
+    .fd-name { font-size: 22px; font-weight: 700; }
+    .fd-hint { color: var(--muted); font-size: 13px; }
+    .flip-all { margin: 0 0 8px; text-align: right; }
+    .flip-all button { font: inherit; font-size: 13px; color: var(--accent); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 5px 10px; cursor: pointer; }
+    @media (prefers-reduced-motion: reduce) { .flip-inner { transition: none; } }
   </style>
 </head>
 <body>
