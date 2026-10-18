@@ -118,9 +118,9 @@ table.fixed th.mgr { width: 110px; }
 table.fixed th.tot { width: 60px; }
 table.fixed th.po { width: 44px; }
 @media (max-width: 560px) {
-  table.fixed th:first-child { width: 20px; }
-  table.fixed th.mgr { width: 62px; }
-  table.fixed th.tot { width: 36px; }
-  table.fixed th.po { width: 26px; }
+  table.fixed th:first-child { width: 18px; }
+  table.fixed th.mgr { width: 58px; }
+  table.fixed th.tot { width: 32px; }
+  table.fixed th.po { width: 24px; }
   table.fixed thead th { letter-spacing: -0.03em; overflow: hidden; text-overflow: clip; }
 }
