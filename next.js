@@ -28,12 +28,12 @@ function renderNextNight(league, stats, schedule) {
   document.getElementById("night-title").textContent =
     `Next game night · ${fmtDay(day)} · first game ${fmtTime(games[0].start)}`;
 
-  const cards = league.managers.map(m => {
+  const cards = meFirst(league.managers).map(m => {
     const picks = managerPicks(league, stats, m);
     const playing = picks.filter(p => gameOf(p.team)).sort((a, b) => gameOf(a.team).start.localeCompare(gameOf(b.team).start));
     const idle = picks.filter(p => !gameOf(p.team));
     return `
-      <section class="card">
+      <section class="card${meClass(m)}">
         <h3><span class="swatch" style="background:${managerColor(league, m)}"></span>${esc(m)}
           <span class="muted">· ${playing.length} of ${picks.length} playing</span></h3>
         ${playing.length ? `<ul class="lines">${playing.map(p => {
@@ -62,7 +62,7 @@ function renderNextNight(league, stats, schedule) {
 function renderWeekAhead(league, stats, schedule) {
   const games = {};
   for (const g of schedule.games) for (const t of [g.away, g.home]) games[t] = (games[t] || 0) + 1;
-  const cards = league.managers.map(m => {
+  const cards = meFirst(league.managers).map(m => {
     const list = managerPicks(league, stats, m).map(p => ({ ...p, n: games[p.team] || 0 })).sort((a, b) => b.n - a.n);
     return { m, list, total: list.reduce((s, r) => s + r.n, 0) };
   });
@@ -70,7 +70,7 @@ function renderWeekAhead(league, stats, schedule) {
   document.getElementById("ahead-title").textContent =
     `Next 7 days · ${fmtDay(schedule.from, { day: "numeric", month: "short" })}–${fmtDay(schedule.to, { day: "numeric", month: "short" })}`;
   document.getElementById("ahead").innerHTML = `<div class="grid">${cards.map(c => `
-    <section class="card">
+    <section class="card${meClass(c.m)}">
       <h3><span class="swatch" style="background:${managerColor(league, c.m)}"></span>${esc(c.m)}
         <span class="muted">· ${c.total} games${c.total === most ? " · most" : ""}</span></h3>
       <ul class="lines">${c.list.map(r => `

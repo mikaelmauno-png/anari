@@ -222,6 +222,7 @@ async function main() {
     const saved = load();
     if (saved && saved.picks) state = saved;
     if (state.manager && !league.managers.includes(state.manager)) state.manager = null;
+    if (!state.manager && league.managers.includes(me())) state.manager = me();
     if (!seasonOver(stats)) {
       const left = stats.teams.reduce((s, t) => s + Math.max(0, SEASON_GAMES - t.gp), 0) / 2;
       document.getElementById("meta").textContent = `Draft for the ${seasonLabel(ctx.nextSeason)} season`;

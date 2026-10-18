@@ -57,18 +57,16 @@ function nightForManager(league, stats, night, manager) {
   return { rows: [...rows.values()], idle: [...idle] };
 }
 
-const FLIPPED_KEY = "anari-flipped";  // { date, managers: [...] } for the last game night
-
 function renderNight(league, stats, night) {
   const revealAll = getSettings().cards === "revealed";
   const seen = readStore(FLIPPED_KEY, {});
   const turned = new Set(seen.date === night.date ? seen.managers || [] : []);
-  const managers = league.managers.map(m => {
+  const managers = meFirst(league.managers).map(m => {
     const open = revealAll || turned.has(m);
     const { rows, idle } = nightForManager(league, stats, night, m);
     // Face down until tapped: the front only shows whose card it is
     return `
-      <div class="flip${open ? " open" : ""}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
+      <div class="flip${open ? " open" : ""}${meClass(m)}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
        <div class="flip-inner">
         <section class="card face-down" style="--mc:${managerColor(league, m)}">
           <span class="fd-name">${esc(m)}</span>
@@ -100,8 +98,8 @@ function renderNight(league, stats, night) {
   document.getElementById("night").innerHTML = `
     ${revealAll || turned.size === league.managers.length ? "" : `<p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>`}
     <div class="grid no-anim">${managers}</div>
-    <h3 class="sub">Scores</h3>
-    <ul class="scores card">${games}</ul>`;
+    <div id="scores-block"><h3 class="sub">Scores</h3>
+    <ul class="scores card">${games}</ul></div>`;
 }
 
 // Fantasy score change between two moments. `from` may be null (season start).
@@ -117,14 +115,14 @@ function renderChange(el, league, from, to) {
       return d && b ? `<span class="chip ${d > 0 ? "up" : "down"}">${SHORT[c.key]} ${d > 0 ? "+" : "−"}${Math.abs(d)}</span>` : "";
     }).join("");
     return `
-      <tr class="${b ? "has-moves" : ""}">
+      <tr class="${b ? "has-moves" : ""}${meClass(r.manager)}">
         <td class="place">${r.place}</td>
         <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, r.manager)}"></span>${esc(r.manager)}</th>
         <td>${b ? start : "–"}</td>
         <td class="total">${r.total}</td>
         <td class="${delta > 0 ? "up" : delta < 0 ? "down" : "muted"}">${b ? (delta > 0 ? "+" : delta < 0 ? "−" : "±") + Math.abs(delta) : ""}</td>
       </tr>
-      ${b ? `<tr class="moves"><td></td><td colspan="4">${moves || `<span class="muted">no change</span>`}</td></tr>` : ""}`;
+      ${b ? `<tr class="moves${meClass(r.manager)}"><td></td><td colspan="4">${moves || `<span class="muted">no change</span>`}</td></tr>` : ""}`;
   }).join("");
   el.innerHTML = `
     <div class="scroll"><table>
@@ -134,6 +132,8 @@ function renderChange(el, league, from, to) {
 }
 
 // Tap (or Enter/Space) turns a card; "Turn all" turns every card face up
+let ctxLeague = null;
+
 function setupFlips(nightDate) {
   const night = document.getElementById("night");
   // Cards already turned show without the animation; later taps animate
@@ -144,6 +144,7 @@ function setupFlips(nightDate) {
     const seen = readStore(FLIPPED_KEY, {});
     const list = seen.date === nightDate ? seen.managers || [] : [];
     if (!list.includes(el.dataset.m)) writeStore(FLIPPED_KEY, { date: nightDate, managers: [...list, el.dataset.m] });
+    if (resultsUnlocked(ctxLeague, nightDate)) unlockSpoilers();
   };
   night.addEventListener("click", e => {
     if (e.target.id === "turn-all") { night.querySelectorAll(".flip").forEach(turn); e.target.parentElement.remove(); return; }
@@ -163,8 +164,12 @@ async function main() {
       loadJSON("data/lastnight.json"), loadJSON("data/history/index.json"),
     ]);
     document.getElementById("meta").textContent = `${seasonLabel(stats.season)} regular season`;
+    ctxLeague = league;
     renderNight(league, stats, night);
     setupFlips(night.date);
+    // Spoiler-free: the scores and this week's changes give last night away
+    spoilerGate(league, [document.getElementById("scores-block"), document.getElementById("week-title"),
+      document.getElementById("week")], night.date);
 
     const [prev, last] = [index[index.length - 2], index[index.length - 1]];
     const snaps = await Promise.all([prev, last].map(d => d ? loadJSON(`data/history/${d}.json`) : null));

@@ -15,6 +15,7 @@
   <style>
     .option { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
     .option:first-child { border-top: 0; }
+    .option input:disabled + span { opacity: 0.6; }
     .option input { margin-top: 4px; width: 18px; height: 18px; accent-color: var(--accent); }
     .option small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
     #reset button { font: inherit; color: var(--accent); background: none; border: 1px solid var(--line); border-radius: 8px; padding: 7px 12px; cursor: pointer; margin-top: 10px; }
@@ -29,11 +30,17 @@
       <div id="meta">Settings are saved on this device only.</div>
     </header>
 
-    <h2>Last game night cards <span id="saved"></span></h2>
+    <h2>Who are you? <span id="saved"></span></h2>
+    <div class="card"><div id="me"></div></div>
+
+    <h2>Last game night cards</h2>
     <div class="card">
       <div id="cards"></div>
       <div id="reset"></div>
     </div>
+
+    <h2>Spoiler-free mode</h2>
+    <div class="card"><div id="spoilers"></div></div>
   </main>
   <script>
     // Version tag on every load so an update is never served from a stale cache

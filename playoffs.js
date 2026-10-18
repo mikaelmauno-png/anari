@@ -56,7 +56,7 @@ function render(league, stats) {
     <div class="scroll"><table class="standings">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th>East</th><th>West</th><th>Correct</th><th>Points</th></tr></thead>
       <tbody>${ranked.map(s => `
-        <tr>
+        <tr class="${meClass(s.manager)}">
           <td class="place">${1 + ranked.filter(o => o.points > s.points).length}</td>
           <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, s.manager)}"></span>${esc(s.manager)}</th>
           ${CONFS.map(([c]) => `<td>${s.teams.filter(t => t.conf === c && t.inPlayoffs).length}/${s.teams.filter(t => t.conf === c).length}</td>`).join("")}
@@ -65,8 +65,8 @@ function render(league, stats) {
         </tr>`).join("")}</tbody>
     </table></div>`;
 
-  document.getElementById("managers").innerHTML = scores.map(s => `
-    <section class="card">
+  document.getElementById("managers").innerHTML = meFirst(scores.map(s => s.manager)).map(m => scores.find(s => s.manager === m)).map(s => `
+    <section class="card${meClass(s.manager)}">
       <h3><span class="swatch" style="background:${managerColor(league, s.manager)}"></span>${esc(s.manager)}
         <span class="muted">· ${s.correct} correct · ${s.points} pts</span></h3>
       ${s.warnings.map(w => `<p class="warn">⚠ ${esc(w)}</p>`).join("")}
@@ -107,6 +107,8 @@ async function main() {
   try {
     const [league, stats] = await Promise.all([loadLeague(), loadJSON("data/stats.json")]);
     render(league, stats);
+    spoilerGate(league, [document.getElementById("summary"), document.getElementById("managers"),
+      document.getElementById("legend"), document.getElementById("picture")]);
   } catch (err) {
     showError(err);
   }

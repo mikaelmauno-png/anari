@@ -42,7 +42,7 @@ function renderChart(league, weeks) {
     `<text class="endlabel" x="${W - PAD.right + 12}" y="${ly + 4}">${esc(s.manager)}</text>`);
 
   const lines = series.map(s => `
-    <polyline fill="none" stroke="${s.color}" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"
+    <polyline fill="none" stroke="${s.color}" stroke-width="${s.manager === me() ? 3.5 : 2}" stroke-linejoin="round" stroke-linecap="round"
       points="${s.points.map((p, i) => `${x(i)},${y(p.diff)}`).join(" ")}"/>
     ${s.points.map((p, i) => `<circle cx="${x(i)}" cy="${y(p.diff)}" r="4" fill="${s.color}" class="dot"/>`).join("")}`);
 

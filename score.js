@@ -372,7 +372,11 @@ const fmtDay = (iso, opts = { weekday: "short", day: "numeric", month: "short" }
 // Per-device settings and small bits of remembered state (localStorage can be
 // unavailable, e.g. in private mode, so every access is guarded)
 const SETTINGS_KEY = "anari-settings";
-const SETTING_DEFAULTS = { cards: "hidden" };  // last game night cards: "hidden" | "revealed"
+const SETTING_DEFAULTS = {
+  cards: "hidden",     // last game night cards: "hidden" | "revealed"
+  me: "",              // which manager this device belongs to ("" = just watching)
+  spoilerFree: false,  // cover last night's results until your card is turned
+};
 function getSettings() {
   try { return { ...SETTING_DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") }; }
   catch { return { ...SETTING_DEFAULTS }; }
@@ -385,6 +389,57 @@ function readStore(key, fallback) {
 }
 function writeStore(key, value) {
   try { localStorage.setItem(key, JSON.stringify(value)); } catch { /* not saved */ }
+}
+
+// ---------- "This is me" ----------
+
+const me = () => getSettings().me || "";
+const meClass = m => (m && m === me() ? " me" : "");
+// Managers with this device's manager first, the rest in their usual order
+const meFirst = managers => [...managers].sort((a, b) => (b === me()) - (a === me()));
+
+// ---------- spoiler-free mode ----------
+
+const FLIPPED_KEY = "anari-flipped";    // { date, managers: [...] } turned on the Last round page
+const SPOILER_OK_KEY = "anari-spoiler-ok"; // date the viewer chose "show anyway"
+
+// Has this device seen last night's results? (Your own card turned, or every
+// card if you haven't said who you are, or "show anyway" for that night.)
+function resultsUnlocked(league, nightDate) {
+  const s = getSettings();
+  if (!s.spoilerFree || s.cards === "revealed") return true;
+  if (readStore(SPOILER_OK_KEY, null) === nightDate) return true;
+  const seen = readStore(FLIPPED_KEY, {});
+  const turned = seen.date === nightDate ? seen.managers || [] : [];
+  return s.me ? turned.includes(s.me) : league.managers.every(m => turned.includes(m));
+}
+
+// Covers the given elements with a "turn your card first" box until unlocked.
+async function spoilerGate(league, elements, nightDate) {
+  if (!getSettings().spoilerFree) return;
+  if (!nightDate) {
+    try { nightDate = (await loadJSON("data/lastnight.json")).date; } catch { return; }
+  }
+  if (resultsUnlocked(league, nightDate)) return;
+  const els = elements.filter(Boolean);
+  els.forEach(el => el.classList.add("spoiler-hidden"));
+  const cover = document.createElement("div");
+  cover.className = "spoiler-cover card";
+  cover.innerHTML = `
+    <b>Spoiler-free mode</b>
+    <p class="muted">Results from ${fmtDay(nightDate)} are hidden until you turn ${me() ? "your card" : "the cards"} on
+      <a href="round.html">Last round</a>.</p>
+    <button type="button">Show anyway</button>`;
+  cover.querySelector("button").addEventListener("click", () => {
+    writeStore(SPOILER_OK_KEY, nightDate);
+    unlockSpoilers();
+  });
+  els[0].before(cover);
+}
+
+function unlockSpoilers() {
+  document.querySelectorAll(".spoiler-cover").forEach(el => el.remove());
+  document.querySelectorAll(".spoiler-hidden").forEach(el => el.classList.remove("spoiler-hidden"));
 }
 
 // league.json plus the cap hits looked up so far (missing file is fine)
