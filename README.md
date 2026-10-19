@@ -52,7 +52,7 @@ Every drafted €/point player needs a cap hit. The €/point card shows how man
 
 ## Stats
 
-`scripts/fetch_stats.py` downloads current stats into `data/stats.json`, the last game night into `data/lastnight.json`, and a snapshot of season totals through every Sunday into `data/history/`. Missed weeks are rebuilt from date-filtered stats. On GitHub, `.github/workflows/update-stats.yml` runs it hourly through the Finnish morning and every 4 hours otherwise. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
+`scripts/fetch_stats.py` downloads current stats into `data/stats.json`, the last game night into `data/lastnight.json`, and a snapshot of season totals through every Sunday into `data/history/`. Missed weeks are rebuilt from date-filtered stats. On GitHub, `.github/workflows/update-stats.yml` is started by an external cron job on [cron-job.org](https://cron-job.org) at :30 Finnish time: hourly 04:30–11:30, then 15:30, 19:30 and 23:30. It calls GitHub's workflow API with a fine-grained token that can only run this repo's Actions; the token expires after a year and cron-job.org emails on failures. GitHub's own schedule (4 times a day) is a backup. To run it manually from the Actions tab, use *Update stats → Run workflow*. Locally:
 
 ```bash
 python3 scripts/fetch_stats.py

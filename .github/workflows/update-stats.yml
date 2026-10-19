@@ -1,12 +1,12 @@
 name: Update stats
 
 on:
+  # The main timetable is an external cron job (cron-job.org) that starts this
+  # workflow through the API at :30 Finnish time: hourly 04:30-11:30, then
+  # 15:30, 19:30 and 23:30. GitHub's own schedule below is only a backup, since
+  # GitHub often starts scheduled runs hours late or skips them.
   schedule:
-    # Cron is UTC. Hourly through the Finnish morning (04-11 local in both
-    # summer and winter time), when the night's NHL games and MoneyPuck's GSAx
-    # come in; every 4 hours otherwise.
-    - cron: "15 1-9 * * *"
-    - cron: "15 13,17,21 * * *"
+    - cron: "47 2,8,14,20 * * *"  # UTC
   workflow_dispatch:
 
 permissions:
