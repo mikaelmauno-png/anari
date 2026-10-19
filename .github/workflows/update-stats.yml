@@ -33,9 +33,12 @@ jobs:
           git add data/
           git diff --cached --quiet && exit 0
           git commit -m "Update stats"
-          # main may have moved on while the fetch ran (e.g. a picks edit): rebase and retry
+          # main may have moved on while the fetch ran (a picks edit, or another
+          # update that GitHub started late). Rebase onto it; if both changed the
+          # same data file, keep this run's copy, which was just fetched.
           for attempt in 1 2 3; do
-            git pull --rebase -q && git push && exit 0
+            git pull --rebase -X theirs -q && git push && exit 0
+            git rebase --abort 2>/dev/null || true
             sleep 10
           done
           exit 1
