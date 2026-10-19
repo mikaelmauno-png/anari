@@ -314,13 +314,16 @@ def write_weekly_snapshots(f):
     sunday = date(start_year, 10, 1)
     sunday += timedelta(days=(6 - sunday.weekday()) % 7)
     changed = False
-    while sunday < today:
+    # Up to and including the NHL's current date: its date only rolls over to
+    # Monday late in the Finnish morning, so a Sunday is taken as soon as all
+    # of its games are final instead of waiting for that.
+    while sunday <= today:
         day = sunday.isoformat()
         sunday += timedelta(days=7)
         if day in index:
             continue
         games = scoreboard(day)["games"]
-        if games and not all_final(games):
+        if (games and not all_final(games)) or (not games and day == today.isoformat()):
             print(f"snapshot {day}: games not final yet", file=sys.stderr)
             break
         skaters = f.skaters(through=day)
