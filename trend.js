@@ -3,9 +3,12 @@
 
 const PAD = { top: 16, right: 70, bottom: 30, left: 36 };
 
-function niceStep(max) {
-  for (const s of [1, 2, 5, 10, 20]) if (max / s <= 4) return s;
-  return 50;
+// The smallest 1/2/5 x 10^n step that covers `range` in at most 4 steps
+function niceStep(range) {
+  const raw = Math.max(range, 1e-9) / 4;
+  const mag = 10 ** Math.floor(Math.log10(raw));
+  for (const m of [1, 2, 5, 10]) if (raw <= m * mag + 1e-9) return Math.max(m * mag, 1e-9);
+  return 10 * mag;
 }
 
 // A line chart with one line per manager, drawn at the container's real width
@@ -18,7 +21,7 @@ function drawChart(el, xs, series, opts) {
   const H = W < 500 ? 240 : 300;
   const vals = series.flatMap(s => s.values).filter(v => v != null && isFinite(v));
   let [lo, hi] = opts.lim || [Math.min(0, ...vals), Math.max(1, ...vals)];
-  const step = opts.step || niceStep(Math.max(1, hi - lo) / 2);
+  const step = opts.step || niceStep(Math.max(1, hi - lo));
   lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
   if (hi === lo) hi = lo + step;
   const x = i => xs.length === 1
