@@ -272,7 +272,9 @@ function applyCapHits(league, stats) {
     const e = looked[item.id];
     if (!e) continue;
     item.capSource = "CapFreeze";
-    if (e.elc) { item.elc = true; item.elcAssumed = true; item.capIfNotElc = e.cap; }
+    // Guessed ELCs (age-based) are listed for checking; ones inferred from a
+    // complete non-ELC list (e.via set) are taken as known
+    if (e.elc) { item.elc = true; item.elcAssumed = !e.via; item.capIfNotElc = e.cap; }
     else item.cap = e.cap;
   }
   for (const [key, val] of Object.entries(league.capHits || {})) {
