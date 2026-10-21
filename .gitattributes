@@ -1,0 +1,4 @@
+# Cap hits are added by hand as well as by the stats bot. If the bot's save
+# collides with a hand edit, keep the version already in the repo; the bot
+# redoes its lookups on the next run. (Driver set up in update-stats.yml.)
+data/caphits.json merge=keep-upstream
