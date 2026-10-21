@@ -7,11 +7,23 @@ function nightLine(cat, line) {
     case "goals": return `${line.g} G`;
     case "pim": return `${line.pim} PIM`;
     case "gsax": {
-      const gsax = line.gsax === null ? "GSAx pending" : `${line.gsax > 0 ? "+" : ""}${line.gsax.toFixed(2)} GSAx`;
+      const gsax = line.gsax == null ? (line.final === false ? "GSAx after the game" : "GSAx pending")
+        : `${line.gsax > 0 ? "+" : ""}${line.gsax.toFixed(2)} GSAx`;
       return `${line.sv}/${line.sa} saves · ${gsax}`;
     }
     default: return `${line.g} G ${line.a} A · ${line.p} P`;
   }
+}
+
+// Older data files have no game state; those games were all final
+const gameStateOf = g => g.state || "final";
+const gameOf = (abbrev, games) => games.find(g => g.away.abbrev === abbrev || g.home.abbrev === abbrev);
+
+// "Live · 2nd 05:12", "Live · OT", or the local start time for a game not started
+function liveLabel(g) {
+  if (gameStateOf(g) === "upcoming") return g.start ? `starts ${new Date(g.start).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })}` : "not started";
+  const per = g.periodType === "OT" ? "OT" : g.periodType === "SO" ? "SO" : g.period ? ["1st", "2nd", "3rd"][g.period - 1] || `P${g.period}` : "";
+  return `live${per ? ` · ${per}` : ""}${g.clock && g.periodType !== "SO" ? ` ${g.clock}` : ""}`;
 }
 
 function teamResult(abbrev, games) {
@@ -19,6 +31,8 @@ function teamResult(abbrev, games) {
     const us = g.away.abbrev === abbrev ? g.away : g.home.abbrev === abbrev ? g.home : null;
     if (!us) continue;
     const them = us === g.away ? g.home : g.away;
+    if (gameStateOf(g) === "upcoming") return null;
+    if (gameStateOf(g) === "live") return `${us.score}–${them.score} ${us === g.away ? "at" : "vs"} ${them.abbrev} · ${liveLabel(g)}`;
     const won = us.score > them.score;
     const extra = g.ending === "OT" || g.ending === "SO";
     const pts = won ? 2 : extra ? 1 : 0;
@@ -34,6 +48,7 @@ function nightForManager(league, stats, night, manager) {
   const goalieLines = new Map(night.goalies.map(g => [g.id, g]));
   const rows = new Map();
   const idle = new Set();
+  const later = new Set();
   for (const cat of CATEGORIES) {
     for (const pick of (league.picks[cat.key] || {})[manager] || []) {
       const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
@@ -46,15 +61,22 @@ function nightForManager(league, stats, night, manager) {
         text = line && nightLine(cat, line);
       }
       const key = `${cat.kind}:${item.id || item.abbrev}`;
-      if (!text) { idle.add(item.name); continue; }
-      if (!rows.has(key)) rows.set(key, { name: item.name, team: item.team, cats: [], lines: [] });
+      const game = gameOf(item.abbrev || item.team, night.games);
+      if (!text) {
+        // Team's game hasn't started yet at the last update, or no game at all
+        if (game && gameStateOf(game) === "upcoming") later.add(`${item.name} (${liveLabel(game)})`);
+        else idle.add(item.name);
+        continue;
+      }
+      if (!rows.has(key)) rows.set(key, { name: item.name, team: item.team, cats: [], lines: [],
+        live: game && gameStateOf(game) === "live" });
       const row = rows.get(key);
       row.cats.push(SHORT[cat.key]);
       if (!row.lines.includes(text)) row.lines.push(text);
     }
   }
   for (const r of rows.values()) idle.delete(r.name);
-  return { rows: [...rows.values()], idle: [...idle] };
+  return { rows: [...rows.values()], idle: [...idle], later: [...later] };
 }
 
 function renderNight(league, stats, night) {
@@ -63,7 +85,7 @@ function renderNight(league, stats, night) {
   const turned = new Set(seen.date === night.date ? seen.managers || [] : []);
   const managers = meFirst(league.managers).map(m => {
     const open = revealAll || turned.has(m);
-    const { rows, idle } = nightForManager(league, stats, night, m);
+    const { rows, idle, later } = nightForManager(league, stats, night, m);
     // Face down until tapped: the front only shows whose card it is
     return `
       <div class="flip${open ? " open" : ""}${meClass(m)}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
@@ -75,10 +97,11 @@ function renderNight(league, stats, night) {
         <section class="card face-up">
         <h3><span class="swatch" style="background:${managerColor(league, m)}"></span>${esc(m)}</h3>
         ${rows.length ? `<ul class="lines">${rows.map(r => `
-          <li><span><b>${esc(r.name)}</b> ${r.team ? `<small>${esc(r.team)}</small>` : ""}
+          <li><span><b>${esc(r.name)}</b> ${r.team ? `<small>${esc(r.team)}</small>` : ""}${r.live ? ` <span class="live-badge">live</span>` : ""}
             <small class="cats">${r.cats.join(" · ")}</small></span>
             <span class="val">${r.lines.map(esc).join("<br>")}</span></li>`).join("")}</ul>`
           : `<p class="muted">No picks played.</p>`}
+        ${later.length ? `<p class="hint">Not started at last update: ${later.map(esc).join(", ")}</p>` : ""}
         ${idle.length ? `<p class="hint">Didn't play: ${idle.map(esc).join(", ")}</p>` : ""}
         </section>
        </div>
@@ -86,16 +109,29 @@ function renderNight(league, stats, night) {
   }).join("");
 
   const games = night.games.map(g => {
-    const awayWon = g.away.score > g.home.score;
+    const st = gameStateOf(g);
+    if (st === "upcoming") return `<li class="muted">${esc(g.away.abbrev)} – ${esc(g.home.abbrev)} <small>${esc(liveLabel(g))}</small></li>`;
+    const awayWon = st === "final" && g.away.score > g.home.score;
+    const homeWon = st === "final" && g.home.score > g.away.score;
     return `<li>
       <span class="${awayWon ? "win" : ""}">${esc(g.away.abbrev)} ${g.away.score}</span>
       <span class="muted">–</span>
-      <span class="${awayWon ? "" : "win"}">${g.home.score} ${esc(g.home.abbrev)}</span>
-      ${g.ending !== "REG" ? `<small>${esc(g.ending)}</small>` : ""}</li>`;
+      <span class="${homeWon ? "win" : ""}">${g.home.score} ${esc(g.home.abbrev)}</span>
+      ${st === "live" ? `<span class="live-badge">${esc(liveLabel(g))}</span>` : g.ending !== "REG" ? `<small>${esc(g.ending)}</small>` : ""}</li>`;
   }).join("");
+  const unfinished = night.games.filter(g => gameStateOf(g) !== "final");
+  const live = unfinished.filter(g => gameStateOf(g) === "live").length;
+  const notStarted = unfinished.length - live;
+  const at = new Date(night.updated).toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+  const status = unfinished.length
+    ? `<p class="status-note">⏳ At the last update (${esc(at)}) ${[live && `${live} game${live === 1 ? " was" : "s were"} still in progress`,
+        notStarted && `${notStarted} hadn't started`].filter(Boolean).join(" and ")}. Results fill in with the next updates.</p>`
+    : "";
 
-  document.getElementById("night-title").textContent = `Last game night · ${fmtDay(night.date)}`;
+  document.getElementById("night-title").textContent =
+    `${unfinished.length ? "Latest game night" : "Last game night"} · ${fmtDay(night.date)}${unfinished.length ? " · in progress" : ""}`;
   document.getElementById("night").innerHTML = `
+    ${status}
     ${revealAll || turned.size === league.managers.length ? "" : `<p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>`}
     <div class="grid no-anim">${managers}</div>
     <div id="scores-block"><h3 class="sub">Scores</h3>

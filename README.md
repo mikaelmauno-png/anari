@@ -16,7 +16,7 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 ## Pages
 
 - **Standings** (`index.html`): totals, every category, best possible picks.
-- **Last round** (`round.html`): the last game night (your picks' stat lines, all scores) and fantasy score changes this week and last week.
+- **Last round** (`round.html`): the latest game night as soon as its first game has started (stat lines from the NHL box scores, so live games show too, marked as live or not started at the last update) and fantasy score changes this week and last week.
 - **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
 - **Next round** (`next.html`): who plays on the next game night, with opponents and local start times, and each manager's games over the next 7 days.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday).
@@ -41,7 +41,7 @@ A manager can have several picks in a category. Each pick is ranked on its own. 
 
 Cap hits come from two places, in millions:
 
-- **Looked up automatically:** once a day the stats update takes the 10 highest-scoring players who could still beat the cheapest known €/point pick and have no cap hit yet. It looks them up on [CapFreeze](https://capfreeze.com/players.html) (one page request) and saves them to `data/caphits.json`. CapFreeze doesn't mark entry-level contracts, so a cheap deal for a rookie or a player drafted in the last 3 years is assumed to be one. The €/point card lists those so you can check them.
+- **Looked up automatically:** once a day the stats update takes the 10 highest-scoring players who could still beat the cheapest known €/point pick and have no cap hit yet. It looks them up on [CapFreeze](https://capfreeze.com/players.html) (one page request) and saves them to `data/caphits.json`. CapFreeze doesn't mark entry-level contracts, so a cheap deal (under $1.1M) for a player aged 24 or under, a rookie or a recent draft pick is assumed to be one. The €/point card lists those so you can check them.
 - **By hand** in `capHits` in `league.json`. These always win. Use `"ELC"` for entry-level contracts, which aren't eligible:
 
 ```json

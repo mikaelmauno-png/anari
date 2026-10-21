@@ -243,18 +243,44 @@ def write_current(f):
     })
 
 
+NOT_STARTED = {"FUT", "PRE"}
+
+
+def game_state(g):
+    return "final" if g["gameState"] in FINAL_STATES else "upcoming" if g["gameState"] in NOT_STARTED else "live"
+
+
 def last_game_night():
-    """The most recent date whose games have all finished, and its games."""
+    """The most recent date on which games have started (some may still be in
+    progress or not started yet), and its regular-season games."""
     board = scoreboard("now")
-    if all_final(board["games"]):
-        return board["currentDate"], board["games"]
-    day = board.get("prevDate")
+    day = board["currentDate"]
     while day:
-        board = scoreboard(day)
-        if all_final(board["games"]):
-            return day, board["games"]
+        games = [g for g in board["games"] if g.get("gameType", 2) == 2]
+        if any(game_state(g) != "upcoming" for g in games):
+            return day, games
         day = board.get("prevDate")
+        board = scoreboard(day) if day else None
     return None, []
+
+
+def boxscore_lines(game):
+    """Per-player lines from the NHL box score; works while a game is live."""
+    box = json.loads(get(f"{WEB_API}/gamecenter/{game['id']}/boxscore"))
+    skaters, goalies = [], []
+    for side in ("awayTeam", "homeTeam"):
+        team = box[side]["abbrev"]
+        players = box.get("playerByGameStats", {}).get(side, {})
+        for p in players.get("forwards", []) + players.get("defense", []):
+            skaters.append({"id": p["playerId"], "name": p["name"]["default"], "team": team,
+                            "g": p.get("goals", 0), "a": p.get("assists", 0), "p": p.get("points", 0),
+                            "pim": p.get("pim", 0)})
+        for p in players.get("goalies", []):
+            if p.get("toi", "00:00") == "00:00":
+                continue  # dressed but didn't play
+            goalies.append({"id": p["playerId"], "name": p["name"]["default"], "team": team,
+                            "sa": p.get("shotsAgainst", 0), "sv": p.get("saves", 0), "ga": p.get("goalsAgainst", 0)})
+    return skaters, goalies
 
 
 def write_last_night(f):
@@ -263,42 +289,49 @@ def write_last_night(f):
     if not day:
         return
     old = read_json(path)
-    if old and old["date"] == day and all(g["gsax"] is not None for g in old["goalies"]):
-        return  # already complete for this night
+    if (old and old["date"] == day and old.get("complete")):
+        return  # every game final and every GSAx in already
 
-    skaters = [{
-        "id": s["playerId"], "name": s["skaterFullName"], "team": last_team(s),
-        "g": s["goals"], "a": s["assists"], "p": s["points"], "pim": s["penaltyMinutes"],
-    } for s in stats_rest("skater", "summary", f.season, date_filter(day, day))]
+    skaters, goalies = [], []
+    for g in games:
+        if game_state(g) != "upcoming":
+            sk, gl = boxscore_lines(g)
+            final = game_state(g) == "final"
+            skaters += [dict(x, final=final) for x in sk]
+            goalies += [dict(x, final=final) for x in gl]
 
-    done = {g["id"]: g for g in (old or {}).get("goalies", []) if old["date"] == day and g["gsax"] is not None}
+    # GSAx from MoneyPuck, only for finished games and once MoneyPuck has them
+    done = {g["id"]: g["gsax"] for g in (old or {}).get("goalies", [])
+            if old["date"] == day and g.get("gsax") is not None}
     gp_through = {g["playerId"]: g["gamesPlayed"]
                   for g in stats_rest("goalie", "summary", f.season, date_filter(end=day))}
     mp_gp = {g["id"]: g["gp"] for g in f.goalies_season()}
-    goalies = []
-    for g in stats_rest("goalie", "summary", f.season, date_filter(day, day)):
-        pid = g["playerId"]
-        if pid in done:
-            goalies.append(done[pid])
-            continue
-        ready = mp_gp.get(pid, 0) >= gp_through.get(pid, 1)
-        game = [r for r in f.goalie_games(pid) if r["date"] == day] if ready else []
-        goalies.append({
-            "id": g["playerId"], "name": g["goalieFullName"], "team": last_team(g),
-            "sa": g["shotsAgainst"], "sv": g["saves"], "ga": g["goalsAgainst"],
-            "w": g["wins"], "l": g["losses"], "otl": g["otLosses"],
-            # MoneyPuck may lag behind the NHL by a few hours; filled in on a later run
-            "gsax": round(game[0]["xga"] - game[0]["ga"], 2) if game else None,
-        })
+    for g in goalies:
+        g["gsax"] = done.get(g["id"])
+        if g["gsax"] is None and g["final"] and mp_gp.get(g["id"], 0) >= gp_through.get(g["id"], 1):
+            game = [r for r in f.goalie_games(g["id"]) if r["date"] == day]
+            if game:
+                g["gsax"] = round(game[0]["xga"] - game[0]["ga"], 2)
 
+    out_games = []
+    for g in games:
+        pd = g.get("periodDescriptor") or {}
+        out_games.append({
+            "away": {"abbrev": g["awayTeam"]["abbrev"], "score": g["awayTeam"].get("score")},
+            "home": {"abbrev": g["homeTeam"]["abbrev"], "score": g["homeTeam"].get("score")},
+            "state": game_state(g),
+            "start": g.get("startTimeUTC"),
+            "period": pd.get("number"),
+            "periodType": pd.get("periodType"),
+            "clock": (g.get("clock") or {}).get("timeRemaining"),
+            "ending": (g.get("gameOutcome") or {}).get("lastPeriodType", "REG"),
+        })
+    complete = all(x["state"] == "final" for x in out_games) and all(x["gsax"] is not None for x in goalies)
     write_json(path, {
         "date": day,
         "updated": now_iso(),
-        "games": [{
-            "away": {"abbrev": g["awayTeam"]["abbrev"], "score": g["awayTeam"].get("score")},
-            "home": {"abbrev": g["homeTeam"]["abbrev"], "score": g["homeTeam"].get("score")},
-            "ending": (g.get("gameOutcome") or {}).get("lastPeriodType", "REG"),
-        } for g in games],
+        "complete": complete,
+        "games": out_games,
         "skaters": skaters,
         "goalies": goalies,
     })
@@ -437,6 +470,18 @@ def match_capfreeze(skater, rows):
     return None
 
 
+def likely_elc(row, skater, draft_cutoff):
+    """CapFreeze doesn't mark entry-level deals. A cheap contract (under $1.1M)
+    for a player aged 24 or under, a rookie or a recent draft pick is assumed to
+    be one; the app lists these so they can be confirmed in league.json."""
+    try:
+        age = int(row.get("age") or 99)
+    except ValueError:
+        age = 99
+    young = age <= 24 or skater.get("rookie") or (skater.get("draft") or 0) >= draft_cutoff
+    return row["cap"] <= 1.1 and bool(young)
+
+
 def write_cap_lookups(league):
     """Look up a few players' cap hits a day: the highest scorers without a
     known cap hit who could still beat the cheapest known € per point."""
@@ -478,11 +523,10 @@ def write_cap_lookups(league):
                 store["notFound"][str(s["id"])] = today
                 print(f"cap hit: no CapFreeze match for {s['name']} ({s['team']})", file=sys.stderr)
                 continue
-            # CapFreeze doesn't mark entry-level deals: a cheap contract for a rookie
-            # or a recent draft pick is assumed to be one (confirm in league.json)
-            elc = row["cap"] <= 1.1 and (s["rookie"] or (s.get("draft") or 0) >= draft_cutoff)
+            elc = likely_elc(row, s, draft_cutoff)
             store["players"][str(s["id"])] = {
-                "name": s["name"], "team": s["team"], "cap": row["cap"], "elc": elc, "date": today,
+                "name": s["name"], "team": s["team"], "cap": row["cap"], "age": row["age"],
+                "elc": elc, "date": today,
             }
             store["notFound"].pop(str(s["id"]), None)
             print(f"cap hit: {s['name']} {row['cap']}M{' (ELC?)' if elc else ''}")
