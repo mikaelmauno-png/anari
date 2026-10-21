@@ -27,6 +27,12 @@
     .tip b { display: block; } .tip .num { font-weight: 700; font-variant-numeric: tabular-nums; }
     .tip div { margin-top: 3px; }
     td small { display: block; }
+    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
+    .controls select { font: inherit; font-size: 15px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; max-width: 100%; }
+    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+    .seg button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 7px 10px; cursor: pointer; }
+    .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
+    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
   </style>
 </head>
 <body>
@@ -42,6 +48,13 @@
 
     <h2>By week</h2>
     <div id="table"></div>
+
+    <h2>Category trend</h2>
+    <div class="card">
+      <div id="cat-controls" class="controls"></div>
+      <div id="cat-chart"></div>
+      <p id="cat-note" class="hint"></p>
+    </div>
 
     <footer>
       The league average is the mean of all managers' totals. 0 = average, so a +3 manager is 3 fantasy points above it.
