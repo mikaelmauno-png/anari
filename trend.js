@@ -28,7 +28,7 @@ function drawChart(el, xs, series, opts) {
 
   const grid = [];
   for (let v = lo; v <= hi + 1e-9; v += step) {
-    grid.push(`<line class="${v === 0 && opts.zeroLabel ? "zero" : "gridline"}" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(v)}" y2="${y(v)}"/>
+    grid.push(`<line class="${v === 0 && (opts.zeroLabel || opts.zeroLine) ? "zero" : "gridline"}" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(v)}" y2="${y(v)}"/>
       <text class="axis" x="${PAD.left - 8}" y="${y(v) + 4}" text-anchor="end">${opts.axisFmt ? opts.axisFmt(v) : v}</text>`);
   }
   const xLabels = xs.map((t, i) => `<text class="axis" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(t)}</text>`);
@@ -167,7 +167,7 @@ function renderCategoryTrend(league, points) {
   } else {
     drawChart(el, xs, series, {
       aria: `${cat.label}: each manager's pick by week`,
-      zeroLabel: cat.key === "gsax" ? "0" : null,
+      zeroLine: cat.key === "gsax",
       lowerIsBetter: cat.key === "value",
       fmt: statFmt(cat), tipTitle,
     });
