@@ -180,7 +180,8 @@ function renderCategoryTrend(league, points) {
   document.getElementById("cat-note").textContent = mode === "points"
     ? `Category points (${league.scoring.join("/")}) each week in ${cat.label.toLowerCase()}.`
     : cat.key === "value" ? "Cap hit per point in thousands of euros: lower is better. No line before a pick's first point."
-    : cat.kind === "team" ? "The picked team's standings points." : `Each manager's pick: ${cat.unit} so far this season.`;
+    : cat.kind === "team" ? "The picked team's standings points."
+    : `Each manager's pick: ${{ G: "goals", P: "points", PIM: "penalty minutes" }[cat.unit] || cat.unit} so far this season.`;
 }
 
 function renderTable(league, weeks) {
