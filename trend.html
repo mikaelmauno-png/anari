@@ -28,7 +28,15 @@
     .tip div { margin-top: 3px; }
     td small { display: block; }
     .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
-    .controls select { font: inherit; font-size: 15px; color: var(--text); background: var(--bg); border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; max-width: 100%; }
+    .sel { display: flex; flex-direction: column; gap: 3px; flex: 1 1 200px; min-width: 0; }
+    .sel-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
+    .sel-box { position: relative; display: block; }
+    .controls select { appearance: none; -webkit-appearance: none; width: 100%; font: inherit; font-size: 16px; font-weight: 600;
+      color: var(--text); background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 10px;
+      padding: 9px 38px 9px 12px; cursor: pointer; }
+    .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+    .chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; }
+    .controls .seg { align-self: flex-end; }
     .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
     .seg button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 7px 10px; cursor: pointer; }
     .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }

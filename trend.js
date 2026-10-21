@@ -136,16 +136,18 @@ function statFmt(cat) {
 function renderCategoryTrend(league, points) {
   const saved = readStore(CAT_VIEW_KEY, {});
   const catKey = CATEGORIES.some(c => c.key === saved.cat) ? saved.cat : CATEGORIES[0].key;
-  const mode = saved.mode === "stat" ? "stat" : "points";
+  const mode = saved.mode === "points" ? "points" : "stat";  // pick's stat is the default
   const cat = CATEGORIES.find(c => c.key === catKey);
 
   document.getElementById("cat-controls").innerHTML = `
-    <label class="sel"><span class="sr-only">Category</span>
-      <select id="cat-select">${CATEGORIES.map(c =>
-        `<option value="${c.key}" ${c.key === catKey ? "selected" : ""}>${esc(c.label)}</option>`).join("")}</select></label>
+    <label class="sel"><span class="sel-label">Category</span>
+      <span class="sel-box"><select id="cat-select">${CATEGORIES.map(c =>
+        `<option value="${c.key}" ${c.key === catKey ? "selected" : ""}>${esc(c.label)}</option>`).join("")}</select>
+        <svg class="chev" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"
+          stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></label>
     <div class="seg" role="group" aria-label="What to show">
-      <button type="button" data-mode="points" aria-pressed="${mode === "points"}">Manager points</button>
       <button type="button" data-mode="stat" aria-pressed="${mode === "stat"}">Pick's stat</button>
+      <button type="button" data-mode="points" aria-pressed="${mode === "points"}">Manager points</button>
     </div>`;
 
   const xs = points.map(p => p.date ? shortDay(p.date) : "Now");
