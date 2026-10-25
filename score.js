@@ -464,3 +464,13 @@ function showError(err) {
   document.querySelector("main").insertAdjacentHTML("beforeend",
     `<p class="warn">Could not load data: ${esc(err.message)}</p>`);
 }
+
+// Phones: the tab bar scrolls sideways; start with the current tab in view
+(function centreCurrentTab() {
+  if (typeof document === "undefined" || !document.querySelector) return;
+  const nav = document.querySelector("nav.tabs");
+  const cur = nav && nav.querySelector('[aria-current="page"]');
+  if (nav && cur && nav.scrollWidth > nav.clientWidth) {
+    nav.scrollLeft = cur.offsetLeft - (nav.clientWidth - cur.offsetWidth) / 2;
+  }
+})();

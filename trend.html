@@ -13,41 +13,14 @@
   <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
   <noscript><link rel="stylesheet" href="style.css"></noscript>
   <style>
-    .legend { display: flex; flex-wrap: wrap; gap: 6px 16px; font-size: 13px; margin-bottom: 8px; }
-    .plot { position: relative; }
-    .plot svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
-    .gridline { stroke: var(--line); stroke-width: 1; }
-    .zero { stroke: var(--muted); stroke-width: 1; stroke-dasharray: 4 3; }
-    .crosshair { stroke: var(--muted); stroke-width: 1; }
-    .axis { fill: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; }
-    .endlabel { fill: var(--text); font-size: 13px; font-weight: 600; }
-    .dot { stroke: var(--card); stroke-width: 2; }
-    .tip { position: absolute; top: 0; min-width: 150px; padding: 8px 10px; background: var(--card); border: 1px solid var(--line);
-      border-radius: 8px; box-shadow: 0 4px 16px rgb(0 0 0 / 0.15); font-size: 13px; pointer-events: none; }
-    .tip b { display: block; } .tip .num { font-weight: 700; font-variant-numeric: tabular-nums; }
-    .tip div { margin-top: 3px; }
-    td small { display: block; }
-    .controls { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-bottom: 10px; }
-    .sel { display: flex; flex-direction: column; gap: 3px; flex: 1 1 200px; min-width: 0; }
-    .sel-label { font-size: 11px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-    .sel-box { position: relative; display: block; }
-    .controls select { appearance: none; -webkit-appearance: none; width: 100%; font: inherit; font-size: 16px; font-weight: 600;
-      color: var(--text); background: var(--accent-soft); border: 1.5px solid var(--accent); border-radius: 10px;
-      padding: 9px 38px 9px 12px; cursor: pointer; }
-    .controls select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
-    .chev { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); color: var(--accent); pointer-events: none; }
-    .controls .seg { align-self: flex-end; }
-    .seg { display: inline-flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-    .seg button { font: inherit; font-size: 13px; color: var(--muted); background: none; border: 0; padding: 7px 10px; cursor: pointer; }
-    .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
-    .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
+      td small { display: block; }
   </style>
 </head>
 <body>
   <main>
     <header>
       <h1>Änäri</h1>
-      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last<span class="wide"> round</span></a><a href="next.html">Next<span class="wide"> round</span></a><a href="trend.html" aria-current="page">Trend</a><a href="playoffs.html">Playoffs</a><a href="settings.html" class="gear" aria-label="Settings" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 3 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.5-1c-1.6.9-3.4-.9-2.4-2.4a1.7 1.7 0 0 0-1.1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1.1-2.5c-1-1.6.8-3.4 2.4-2.4 1 .6 2.3.1 2.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg></a></nav>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last<span class="wide"> round</span></a><a href="next.html">Next<span class="wide"> round</span></a><a href="picks.html">Picks</a><a href="trend.html" aria-current="page">Trend</a><a href="playoffs.html">Playoffs</a><a href="settings.html" class="gear" aria-label="Settings" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 3 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.5-1c-1.6.9-3.4-.9-2.4-2.4a1.7 1.7 0 0 0-1.1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1.1-2.5c-1-1.6.8-3.4 2.4-2.4 1 .6 2.3.1 2.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg></a></nav>
       <div id="meta">Loading…</div>
     </header>
 
@@ -71,7 +44,7 @@
   </main>
   <script>
     // Version tag on every load so an update is never served from a stale cache
-    for (const src of ["score.js", "trend.js"]) {
+    for (const src of ["score.js", "chart.js", "trend.js"]) {
       const s = document.createElement("script");
       s.src = `${src}?v=${Date.now()}`;
       s.async = false;

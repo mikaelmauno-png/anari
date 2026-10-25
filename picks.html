@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Änäri picks</title>
+  <meta name="theme-color" content="#0f172a">
+  <link rel="manifest" href="manifest.json">
+  <link rel="icon" href="icons/icon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Änäri">
+  <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
+  <noscript><link rel="stylesheet" href="style.css"></noscript>
+  <style>
+    #cats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+    .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+    .cat-head h3 { margin: 0; font-size: 15px; }
+    .cat-head .pts { font-weight: 700; font-size: 14px; white-space: nowrap; }
+    .pick-line { margin: 4px 0 6px; font-size: 14px; }
+    .places { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 0; font-size: 12px; color: var(--muted); }
+    .places b { color: var(--text); }
+    #total-title { margin: 0 0 6px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <main>
+    <header>
+      <h1>Änäri</h1>
+      <nav class="tabs"><a href="./">Standings</a><a href="round.html">Last<span class="wide"> round</span></a><a href="next.html">Next<span class="wide"> round</span></a><a href="picks.html" aria-current="page">Picks</a><a href="trend.html">Trend</a><a href="playoffs.html">Playoffs</a><a href="settings.html" class="gear" aria-label="Settings" title="Settings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M10.3 4.3c.4-1.8 3-1.8 3.4 0a1.7 1.7 0 0 0 2.6 1.1c1.5-.9 3.3.8 2.4 2.4a1.7 1.7 0 0 0 1 2.5c1.8.4 1.8 3 0 3.4a1.7 1.7 0 0 0-1 2.6c.9 1.5-.9 3.3-2.4 2.4a1.7 1.7 0 0 0-2.6 1c-.4 1.8-3 1.8-3.4 0a1.7 1.7 0 0 0-2.5-1c-1.6.9-3.4-.9-2.4-2.4a1.7 1.7 0 0 0-1.1-2.6c-1.8-.4-1.8-3 0-3.4a1.7 1.7 0 0 0 1.1-2.5c-1-1.6.8-3.4 2.4-2.4 1 .6 2.3.1 2.5-1.1z"/><circle cx="12" cy="12" r="3"/></svg></a></nav>
+      <div id="meta">Loading…</div>
+    </header>
+
+    <div id="pick-controls" class="controls" style="margin-top:16px"></div>
+
+    <div id="content">
+      <h2>Season so far</h2>
+      <div class="card">
+        <h3 id="total-title"></h3>
+        <div id="total-chart"></div>
+      </div>
+
+      <h2>Picks by category</h2>
+      <div id="cats"></div>
+    </div>
+
+    <footer>
+      Each chart shows the pick's stat at the end of every week (Sunday) and now; tap a point for the place and category points that week.
+      Places in a row under each chart: 1 = first in the category that week, T = tied.
+    </footer>
+  </main>
+  <script>
+    // Version tag on every load so an update is never served from a stale cache
+    for (const src of ["score.js", "chart.js", "picks.js"]) {
+      const s = document.createElement("script");
+      s.src = `${src}?v=${Date.now()}`;
+      s.async = false;
+      document.body.append(s);
+    }
+    if ("serviceWorker" in navigator) navigator.serviceWorker.register("service-worker.js");
+  </script>
+</body>
+</html>
