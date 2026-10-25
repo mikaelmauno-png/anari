@@ -125,9 +125,13 @@ table.fixed th.po { width: 44px; }
   table.fixed thead th { font-size: 9px; letter-spacing: -0.02em; overflow: hidden; text-overflow: clip; }
 }
 
-/* Settings gear: icon-only last tab */
-nav.tabs a.gear { display: inline-flex; align-items: center; justify-content: center; }
-@media (max-width: 560px) { nav.tabs a.gear { flex: 0 0 auto; padding: 6px 8px; } }
+/* Settings gear: its own icon in the header's top right corner */
+header { position: relative; }
+header h1 { padding-right: 44px; }
+.settings-link { position: absolute; top: 0; right: 0; display: inline-flex; align-items: center; justify-content: center;
+  width: 38px; height: 38px; border-radius: 10px; color: var(--muted); }
+.settings-link:hover { color: var(--text); }
+.settings-link[aria-current="page"] { background: var(--accent-soft); color: var(--accent); }
 
 /* "This is me": your row, picks and cards */
 tr.me > * { background: var(--accent-soft); }
@@ -174,9 +178,9 @@ ol.rank li.me { background: var(--accent-soft); border-radius: 8px; margin: 0 -8
 .seg button[aria-pressed="true"] { background: var(--accent-soft); color: var(--accent); font-weight: 600; }
 .sr-only { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); }
 
-/* Seven tabs: on phones the tab bar scrolls sideways (current tab centred by score.js) */
+/* Six tabs fit a phone screen without scrolling: they share the width by text length */
 @media (max-width: 560px) {
-  nav.tabs { overflow-x: auto; flex-wrap: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; }
-  nav.tabs::-webkit-scrollbar { display: none; }
-  nav.tabs a { flex: 0 0 auto; padding: 6px 10px; }
+  nav.tabs { gap: 2px; }
+  nav.tabs a { flex: 1 1 auto; padding: 6px 3px; font-size: 13px; letter-spacing: -0.01em; }
 }
+@media (max-width: 350px) { nav.tabs a { font-size: 12px; padding: 6px 2px; } }
