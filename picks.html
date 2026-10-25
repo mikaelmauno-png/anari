@@ -13,14 +13,15 @@
   <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
   <noscript><link rel="stylesheet" href="style.css"></noscript>
   <style>
-    #cats { display: grid; gap: 12px; grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
-    .cat-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
-    .cat-head h3 { margin: 0; font-size: 15px; }
-    .cat-head .pts { font-weight: 700; font-size: 14px; white-space: nowrap; }
-    .pick-line { margin: 4px 0 6px; font-size: 14px; }
-    .places { display: flex; flex-wrap: wrap; gap: 4px 12px; margin: 4px 0 0; font-size: 12px; color: var(--muted); }
-    .places b { color: var(--text); }
-    #total-title { margin: 0 0 6px; font-size: 16px; }
+    #pick-head h3 { margin: 0; font-size: 18px; }
+    #pick-head p { margin: 4px 0 0; }
+    #pick-head .sum { font-weight: 600; font-variant-numeric: tabular-nums; }
+    #pick-chart { margin-top: 10px; }
+    table.log th, table.log td { padding: 7px 6px; }
+    table.log .l { text-align: left; }
+    table.log td.b { font-weight: 700; }
+    table.log tr.quiet td { color: var(--muted); }
+    table.log small { color: var(--muted); }
   </style>
 </head>
 <body>
@@ -34,19 +35,19 @@
     <div id="pick-controls" class="controls" style="margin-top:16px"></div>
 
     <div id="content">
-      <h2>Season so far</h2>
-      <div class="card">
-        <h3 id="total-title"></h3>
-        <div id="total-chart"></div>
+      <div class="card" style="margin-top:12px">
+        <div id="pick-head"></div>
+        <div id="pick-chart"></div>
+        <p id="chart-note" class="hint"></p>
       </div>
 
-      <h2>Picks by category</h2>
-      <div id="cats"></div>
+      <h2>Game by game</h2>
+      <div id="log"></div>
     </div>
 
     <footer>
-      Each chart shows the pick's stat at the end of every week (Sunday) and now; tap a point for the place and category points that week.
-      Places in a row under each chart: 1 = first in the category that week, T = tied.
+      Game logs from NHL.com, newest first, updated with every stats update. GSAx per game from MoneyPuck,
+      usually a few hours after the game (shown as … until then).
     </footer>
   </main>
   <script>

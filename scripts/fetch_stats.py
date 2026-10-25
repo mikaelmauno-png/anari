@@ -9,6 +9,7 @@ Writes:
   data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
   data/schedule.json         regular-season games in the next 7 days
   data/seasons/<season>/     final stats and league file, saved once the regular season ends
+  data/gamelogs.json         game-by-game lines for every picked player and team
 
 Runs on a schedule in GitHub Actions (the NHL API and MoneyPuck don't allow
 direct browser requests). Standard library only.
@@ -419,6 +420,84 @@ def archive_finished_season(league):
     print(f"archived final {stats['season']} season")
 
 
+# ---------- game logs of the picks ----------
+
+PICK_KINDS = {"gsax": "goalie", "presidents": "team"}  # every other category is a skater
+# Same tie-breaks as the web app when several players share a name
+PICK_CHECKS = {"rookies": lambda s: s.get("rookie"), "finnish": lambda s: s.get("nat") == "FIN"}
+
+
+def find_pick(name, pool, cat):
+    item = find_skater(name, pool)
+    if item or cat not in PICK_CHECKS:
+        return item
+    key = norm(str(name))
+    hits = [s for s in pool if (norm(s["name"]) == key or last_name(s["name"]) == key) and PICK_CHECKS[cat](s)]
+    return hits[0] if len(hits) == 1 else None
+
+
+def write_gamelogs(f, league):
+    """Game-by-game lines for every player and team someone has picked."""
+    stats = read_json(os.path.join(DATA, "stats.json"))
+    logs = {}
+    for cat, by_manager in league["picks"].items():
+        kind = PICK_KINDS.get(cat, "skater")
+        for manager, picks in by_manager.items():
+            for pick in picks if isinstance(picks, list) else [picks]:
+                name = pick["player"] if isinstance(pick, dict) else pick
+                if kind == "team":
+                    key = f"team:{str(name).upper()}"
+                    if key not in logs:
+                        logs[key] = {"kind": "team", "abbrev": str(name).upper(), "picks": []}
+                else:
+                    item = find_pick(name, stats["goalies"] if kind == "goalie" else stats["skaters"], cat)
+                    if not item:
+                        print(f"game log: can't find {name}", file=sys.stderr)
+                        continue
+                    key = f"{kind}:{item['id']}"
+                    if key not in logs:
+                        logs[key] = {"kind": kind, "id": item["id"], "name": item["name"], "team": item["team"], "picks": []}
+                logs[key]["picks"].append({"manager": manager, "cat": cat})
+
+    for key, entry in logs.items():
+        if entry["kind"] == "team":
+            data = json.loads(get(f"{WEB_API}/club-schedule-season/{entry['abbrev']}/{f.season}", pause=0.3))
+            games = []
+            for g in data["games"]:
+                if g.get("gameType") != 2 or g["gameState"] not in FINAL_STATES:
+                    continue
+                home = g["homeTeam"]["abbrev"] == entry["abbrev"]
+                us, them = (g["homeTeam"], g["awayTeam"]) if home else (g["awayTeam"], g["homeTeam"])
+                extra = (g.get("gameOutcome") or {}).get("lastPeriodType", "REG")
+                won = us.get("score", 0) > them.get("score", 0)
+                games.append({"date": g["gameDate"], "opp": them["abbrev"], "home": home,
+                              "gf": us.get("score"), "ga": them.get("score"), "ending": extra,
+                              "result": "W" if won else ("OTL" if extra in ("OT", "SO") else "L"),
+                              "pts": 2 if won else (1 if extra in ("OT", "SO") else 0)})
+            entry["games"] = games
+            continue
+        data = json.loads(get(f"{WEB_API}/player/{entry['id']}/game-log/{f.season}/2", pause=0.3))
+        games = []
+        for g in sorted(data.get("gameLog", []), key=lambda g: g["gameDate"]):
+            line = {"date": g["gameDate"], "opp": g.get("opponentAbbrev"), "home": g.get("homeRoadFlag") == "H",
+                    "toi": g.get("toi")}
+            if entry["kind"] == "goalie":
+                line.update({"dec": g.get("decision"), "sa": g.get("shotsAgainst", 0), "ga": g.get("goalsAgainst", 0),
+                             "svp": g.get("savePctg")})
+            else:
+                line.update({"g": g.get("goals", 0), "a": g.get("assists", 0), "p": g.get("points", 0),
+                             "pim": g.get("pim", 0), "shots": g.get("shots", 0)})
+            games.append(line)
+        if entry["kind"] == "goalie":
+            by_date = {r["date"]: r for r in f.goalie_games(entry["id"])}
+            for line in games:
+                r = by_date.get(line["date"])
+                line["gsax"] = round(r["xga"] - r["ga"], 2) if r else None  # MoneyPuck can lag a few hours
+        entry["games"] = games
+
+    write_json(os.path.join(DATA, "gamelogs.json"), {"updated": now_iso(), "logs": logs})
+
+
 # ---------- cap hits ----------
 
 def norm(name):
@@ -544,6 +623,10 @@ def main():
     write_weekly_snapshots(f)
     write_schedule()
     archive_finished_season(league)
+    try:
+        write_gamelogs(f, league)
+    except Exception as e:  # game logs are extra; never fail the whole update over them
+        print(f"game logs failed: {e}", file=sys.stderr)
     try:
         write_cap_lookups(league)
     except Exception as e:  # a CapFreeze hiccup shouldn't stop the stats update
