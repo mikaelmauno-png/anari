@@ -86,7 +86,11 @@ function drawChart(el, xs, series, opts) {
     grid.push(`<line class="${v === 0 && (opts.zeroLabel || opts.zeroLine) ? "zero" : "gridline"}" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(v)}" y2="${y(v)}"/>
       <text class="axis" x="${PAD.left - 8}" y="${y(v) + 4}" text-anchor="end">${opts.axisFmt ? opts.axisFmt(v) : v.toFixed(decimals)}</text>`);
   }
-  const xLabels = xs.map((t, i) => `<text class="axis" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(t)}</text>`);
+  // As many x labels as fit (about 6.5 px a character), always keeping the last
+  const fit = Math.max(2, Math.floor((W - PAD.left - PAD.right) / (Math.max(...xs.map(t => String(t).length)) * 6.5 + 10)) + 1);
+  const every = Math.ceil(xs.length / fit);
+  const xLabels = xs.map((t, i) => (i % every && i !== xs.length - 1) || (i !== xs.length - 1 && xs.length - 1 - i < every && i % every === 0 && i)
+    ? "" : `<text class="axis" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(t)}</text>`);
 
   // Direct labels at the line ends, nudged apart so they don't overlap
   const lastVal = s => [...s.values].reverse().find(v => v != null && isFinite(v));

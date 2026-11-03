@@ -97,10 +97,6 @@ function render(league, logs, choice) {
       zeroLine: stat.key === "gsax", integer: stat.key !== "gsax", fmt: stat.fmt,
       tipTitle: i => `${gameDay(entry.games[i].date)} · game ${i + 1}`,
     });
-    // Thin out the x labels: one per game is too many on a phone
-    const labels = el.querySelectorAll("text.axis[text-anchor='middle']");
-    const every = Math.ceil(labels.length / 6);
-    labels.forEach((t, i) => { if (i % every && i !== labels.length - 1) t.remove(); });
   } else {
     el.innerHTML = "";
   }
