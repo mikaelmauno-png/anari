@@ -60,11 +60,11 @@ function drawChart(el, xs, series, opts) {
     const all = [];
     for (let e = Math.floor(Math.log10(dlo)); e <= Math.ceil(Math.log10(dhi)); e++)
       for (const m of [1, 2, 5]) all.push(m * 10 ** e);
-    lo = Math.max(...all.filter(t => t <= dlo + 1e-9));
-    hi = Math.min(...all.filter(t => t >= dhi - 1e-9));
-    if (hi <= lo) hi = all[all.indexOf(lo) + 1];
+    // The ends hug the data, with a little room; gridlines at 1/2/5 inside
+    lo = dlo / 1.15; hi = dhi * 1.15;
     ticks = all.filter(t => t >= lo && t <= hi);
-    if (ticks.length > 6) ticks = ticks.filter(t => t === lo || t === hi || !/^2/.test(String(t)));
+    if (ticks.length < 2) ticks = [lo, hi].map(v => +v.toPrecision(2));
+    if (ticks.length > 6) ticks = ticks.filter(t => !/^2/.test(String(t)));
     scale = Math.log10;
   } else {
     [lo, hi] = opts.lim || autoRange(vals, opts);
