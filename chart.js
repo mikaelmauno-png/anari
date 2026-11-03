@@ -3,12 +3,19 @@
 
 const CHART_PAD = { top: 16, right: 70, bottom: 30, left: 36 };
 
-// The smallest 1/2/5 x 10^n step that covers `range` in at most 4 steps
-function niceStep(range) {
-  const raw = Math.max(range, 1e-9) / 4;
-  const mag = 10 ** Math.floor(Math.log10(raw));
-  for (const m of [1, 2, 5, 10]) if (raw <= m * mag + 1e-9) return Math.max(m * mag, 1e-9);
-  return 10 * mag;
+// The 1/2/5 x 10^n step that wastes the least space above and below the data,
+// with 3–6 gridline gaps
+function niceStep(range, lo = 0, hi = range) {
+  const mag = 10 ** Math.floor(Math.log10(Math.max(range, 1e-9)));
+  let best = null;
+  for (const m of [0.1, 0.2, 0.5, 1, 2, 5, 10]) {
+    const step = m * mag;
+    const n = Math.round(Math.ceil(hi / step - 1e-9) - Math.floor(lo / step + 1e-9));
+    if (n < 3 || n > 6) continue;
+    const span = n * step;
+    if (!best || span < best.span) best = { step, span };
+  }
+  return best ? best.step : range / 4;
 }
 
 // The y range for the data. Starts at 0 when the data is near it (or crosses
@@ -19,13 +26,9 @@ function autoRange(vals, opts) {
   if (!vals.length) return [0, 1];
   const sorted = [...vals].sort((a, b) => a - b);
   let lo = sorted[0], hi = sorted[sorted.length - 1];
-  if (sorted.length >= 6) {
-    const q = k => sorted[Math.round(k * (sorted.length - 1))];
-    const spread = q(0.85) - q(0.15);
-    if (spread > 0) {
-      hi = Math.min(hi, q(0.85) + 2 * spread);
-      lo = Math.max(lo, q(0.15) - 2 * spread);
-    }
+  if (sorted.length >= 10) {
+    const q85 = sorted[Math.round(0.85 * (sorted.length - 1))];
+    if (q85 > 0 && hi > 2.5 * q85) hi = q85 * 1.3;
   }
   if (opts.zeroLine || (lo <= 0 && hi >= 0)) return [Math.min(lo, 0), Math.max(hi, 0)];
   if (lo > 0 && lo < hi / 2) return [0, hi];
@@ -46,7 +49,7 @@ function drawChart(el, xs, series, opts) {
   const H = compact ? 150 : W < 500 ? 240 : 300;
   const vals = series.flatMap(s => s.values).filter(v => v != null && isFinite(v));
   let [lo, hi] = opts.lim || autoRange(vals, opts);
-  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1);
+  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1, lo, hi);
   lo = Math.floor(lo / step + 1e-9) * step; hi = Math.ceil(hi / step - 1e-9) * step;
   if (hi <= lo) hi = lo + step;
   const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));

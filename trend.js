@@ -4,7 +4,7 @@
 // The main chart: each manager's total minus the league average, by week
 function renderChart(league, weeks) {
   const maxAbs = Math.max(1, ...weeks.flatMap(w => Object.values(w.diff).map(Math.abs)));
-  const step = niceStep(maxAbs);
+  const step = niceStep(2 * maxAbs, -maxAbs, maxAbs);
   const lim = Math.ceil(maxAbs / step) * step;
   drawChart(document.getElementById("chart"), weeks.map(w => shortDay(w.date)),
     league.managers.map(m => ({
