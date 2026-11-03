@@ -11,6 +11,29 @@ function niceStep(range) {
   return 10 * mag;
 }
 
+// The y range for the data. Starts at 0 when the data is near it (or crosses
+// it), otherwise fits the data so close lines don't run together. A lone
+// outlier, like €/point after a pick's first point, goes off the scale
+// instead of flattening every other line.
+function autoRange(vals, opts) {
+  if (!vals.length) return [0, 1];
+  const sorted = [...vals].sort((a, b) => a - b);
+  let lo = sorted[0], hi = sorted[sorted.length - 1];
+  if (sorted.length >= 6) {
+    const q = k => sorted[Math.round(k * (sorted.length - 1))];
+    const spread = q(0.85) - q(0.15);
+    if (spread > 0) {
+      hi = Math.min(hi, q(0.85) + 2 * spread);
+      lo = Math.max(lo, q(0.15) - 2 * spread);
+    }
+  }
+  if (opts.zeroLine || (lo <= 0 && hi >= 0)) return [Math.min(lo, 0), Math.max(hi, 0)];
+  if (lo > 0 && lo < hi / 2) return [0, hi];
+  if (hi < 0 && hi > lo / 2) return [lo, 0];
+  const pad = (hi - lo) * 0.08 || Math.abs(hi) * 0.1 || 1;
+  return [lo - pad, hi + pad];
+}
+
 // A line chart with one line per manager, drawn at the container's real width
 // so text stays readable on a phone. Hover/tap snaps to the nearest point and
 // lists every manager.
@@ -22,19 +45,22 @@ function drawChart(el, xs, series, opts) {
   const W = Math.max(compact ? 220 : 280, el.clientWidth - (compact ? 0 : 32));
   const H = compact ? 150 : W < 500 ? 240 : 300;
   const vals = series.flatMap(s => s.values).filter(v => v != null && isFinite(v));
-  let [lo, hi] = opts.lim || [Math.min(0, ...vals), Math.max(1, ...vals)];
-  const step = opts.step || niceStep(Math.max(1, hi - lo));
-  lo = Math.floor(lo / step) * step; hi = Math.ceil(hi / step) * step;
-  if (hi === lo) hi = lo + step;
+  let [lo, hi] = opts.lim || autoRange(vals, opts);
+  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1);
+  lo = Math.floor(lo / step + 1e-9) * step; hi = Math.ceil(hi / step - 1e-9) * step;
+  if (hi <= lo) hi = lo + step;
+  const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+  const clip = v => Math.min(Math.max(v, lo), hi);
   const x = i => xs.length === 1
     ? PAD.left + (W - PAD.left - PAD.right) / 2
     : PAD.left + i * (W - PAD.left - PAD.right) / (xs.length - 1);
-  const y = v => PAD.top + (hi - v) * (H - PAD.top - PAD.bottom) / (hi - lo);
+  const y = v => PAD.top + (hi - clip(v)) * (H - PAD.top - PAD.bottom) / (hi - lo);
 
   const grid = [];
-  for (let v = lo; v <= hi + 1e-9; v += step) {
+  for (let k = 0; lo + k * step <= hi + 1e-9; k++) {
+    const v = +(lo + k * step).toFixed(decimals);  // no 0.30000000000000004 labels
     grid.push(`<line class="${v === 0 && (opts.zeroLabel || opts.zeroLine) ? "zero" : "gridline"}" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(v)}" y2="${y(v)}"/>
-      <text class="axis" x="${PAD.left - 8}" y="${y(v) + 4}" text-anchor="end">${opts.axisFmt ? opts.axisFmt(v) : v}</text>`);
+      <text class="axis" x="${PAD.left - 8}" y="${y(v) + 4}" text-anchor="end">${opts.axisFmt ? opts.axisFmt(v) : v.toFixed(decimals)}</text>`);
   }
   const xLabels = xs.map((t, i) => `<text class="axis" x="${x(i)}" y="${H - 8}" text-anchor="middle">${esc(t)}</text>`);
 
@@ -50,7 +76,10 @@ function drawChart(el, xs, series, opts) {
     s.values.forEach((v, k) => { if (v == null || !isFinite(v)) segs.push([]); else segs[segs.length - 1].push(`${x(k)},${y(v)}`); });
     return segs.filter(g => g.length).map(g => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.name === me() ? 3.5 : 2}"
         stroke-linejoin="round" stroke-linecap="round" points="${g.join(" ")}"/>`).join("") +
-      s.values.map((v, k) => v == null || !isFinite(v) ? "" : `<circle cx="${x(k)}" cy="${y(v)}" r="4" fill="${s.color}" class="dot"/>`).join("");
+      s.values.map((v, k) => v == null || !isFinite(v) ? "" : v > hi || v < lo
+        // Off the scale: a hollow dot on the edge (the tooltip has the real value)
+        ? `<circle cx="${x(k)}" cy="${y(v)}" r="4" fill="var(--card)" stroke="${s.color}" stroke-width="2" class="dot off"/>`
+        : `<circle cx="${x(k)}" cy="${y(v)}" r="4" fill="${s.color}" class="dot"/>`).join("");
   });
 
   el.innerHTML = `
