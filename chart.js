@@ -4,18 +4,20 @@
 const CHART_PAD = { top: 16, right: 70, bottom: 30, left: 36 };
 
 // The 1/2/5 x 10^n step that wastes the least space above and below the data,
-// with 3–6 gridline gaps
-function niceStep(range, lo = 0, hi = range) {
+// with 3–6 gridline gaps (fewer only when the data is tiny). `minStep` 1 keeps
+// counts like goals on whole numbers.
+function niceStep(range, lo = 0, hi = range, minStep = 0) {
   const mag = 10 ** Math.floor(Math.log10(Math.max(range, 1e-9)));
+  const cands = [0.1, 0.2, 0.5, 1, 2, 5, 10].map(m => m * mag).filter(st => st >= minStep - 1e-9);
+  if (!cands.length) cands.push(minStep);
   let best = null;
-  for (const m of [0.1, 0.2, 0.5, 1, 2, 5, 10]) {
-    const step = m * mag;
+  for (const step of cands) {
     const n = Math.round(Math.ceil(hi / step - 1e-9) - Math.floor(lo / step + 1e-9));
-    if (n < 3 || n > 6) continue;
-    const span = n * step;
-    if (!best || span < best.span) best = { step, span };
+    if (n > 6) continue;
+    const span = n * step, ok = n >= 3;
+    if (!best || ok && !best.ok || ok === best.ok && (ok ? span < best.span : step < best.step)) best = { step, span, ok };
   }
-  return best ? best.step : range / 4;
+  return best ? best.step : Math.max(minStep, range / 4);
 }
 
 // The y range for the data. Starts at 0 when the data is near it (or crosses
@@ -30,6 +32,7 @@ function autoRange(vals, opts) {
     const q85 = sorted[Math.round(0.85 * (sorted.length - 1))];
     if (q85 > 0 && hi > 2.5 * q85) hi = q85 * 1.3;
   }
+  if (hi === lo) hi = lo + (opts.integer ? 1 : Math.abs(lo) * 0.1 || 1);
   if (opts.zeroLine || (lo <= 0 && hi >= 0)) return [Math.min(lo, 0), Math.max(hi, 0)];
   if (lo > 0 && lo < hi / 2) return [0, hi];
   if (hi < 0 && hi > lo / 2) return [lo, 0];
@@ -41,7 +44,7 @@ function autoRange(vals, opts) {
 // so text stays readable on a phone. Hover/tap snaps to the nearest point and
 // lists every manager.
 //   xs: x labels; series: [{ name, color, values: [number|null], extra?: [string] }]
-//   opts: { id, aria, lim?: [min, max], step?, zeroLabel?, fmt(v), tipTitle(i) }
+//   opts: { id, aria, lim?: [min, max], step?, integer?, zeroLabel?, fmt(v), tipTitle(i) }
 function drawChart(el, xs, series, opts) {
   const compact = !!opts.compact;  // small multiples: no legend or end labels
   const PAD = compact ? { ...CHART_PAD, right: 14, top: 10 } : CHART_PAD;
@@ -49,7 +52,7 @@ function drawChart(el, xs, series, opts) {
   const H = compact ? 150 : W < 500 ? 240 : 300;
   const vals = series.flatMap(s => s.values).filter(v => v != null && isFinite(v));
   let [lo, hi] = opts.lim || autoRange(vals, opts);
-  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1, lo, hi);
+  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1, lo, hi, opts.integer ? 1 : 0);
   lo = Math.floor(lo / step + 1e-9) * step; hi = Math.ceil(hi / step - 1e-9) * step;
   if (hi <= lo) hi = lo + step;
   const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));

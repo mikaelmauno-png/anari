@@ -94,7 +94,7 @@ function render(league, logs, choice) {
       extra: entry.games.map(g => `${vsAt(g)}${entry.kind === "team" ? ` ${g.result}` : ""}`),
     }], {
       compact: true, aria: `${entry.name || entry.abbrev}: ${stat.label} through the season`,
-      zeroLine: stat.key === "gsax", fmt: stat.fmt,
+      zeroLine: stat.key === "gsax", integer: stat.key !== "gsax", fmt: stat.fmt,
       tipTitle: i => `${gameDay(entry.games[i].date)} · game ${i + 1}`,
     });
     // Thin out the x labels: one per game is too many on a phone

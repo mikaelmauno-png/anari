@@ -64,6 +64,7 @@ function renderCategoryTrend(league, points) {
     drawChart(el, xs, series, {
       aria: `${cat.label}: each manager's pick by week`,
       zeroLine: cat.key === "gsax",
+      integer: cat.key !== "gsax",
       lowerIsBetter: cat.key === "value",
       fmt: statFmt(cat), tipTitle,
     });
