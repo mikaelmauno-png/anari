@@ -33,8 +33,8 @@ function menu(league, logs, choice) {
           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></label>`;
 }
 
-const missedText = a => `${a.lastPlayed ? `Hasn't played since ${gameDay(a.lastPlayed)}` : "Hasn't played this season"}:
-  ${esc(a.team)} has played ${a.missed} game${a.missed === 1 ? "" : "s"} without him. Injury, healthy scratch or suspension${a.kind === "goalie" ? ", or the backup's starts" : ""}.`;
+const missedText = a => `${a.status ? `${irText(a)}. ` : ""}${a.missed ? `${a.lastPlayed ? `Hasn't played since ${gameDay(a.lastPlayed)}` : "Hasn't played this season"}:
+  ${esc(a.team)} has played ${a.missed} game${a.missed === 1 ? "" : "s"} without him.${a.status ? "" : ` Injury, healthy scratch or suspension${a.kind === "goalie" ? ", or the backup's starts" : ""}.`}` : ""}`;
 
 let TEAM_NAMES = {};
 const teamName = abbrev => TEAM_NAMES[abbrev] || abbrev;

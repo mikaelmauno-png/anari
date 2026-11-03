@@ -465,18 +465,23 @@ async function loadLeague() {
 }
 
 // Picked players who've missed their team's latest games (injury, scratch or
-// suspension), from data/availability.json. Goalies only from 3 in a row,
-// since a backup starting once or twice is normal.
+// suspension), from data/availability.json, plus IR/LTIR from CapFreeze.
+// Goalies only from 3 in a row, since a backup starting once or twice is normal.
 let AVAILABILITY = {};
+const IR_LABEL = { IR: "IR", LTIR: "LTIR", SELTIR: "LTIR, season" };
 function missedGames(id) {
   const a = AVAILABILITY[id];
-  return a && a.missed >= (a.kind === "goalie" ? 3 : 1) ? a : null;
+  return a && (a.status || a.missed >= (a.kind === "goalie" ? 3 : 1)) ? a : null;
+}
+function irText(a) {
+  return a.status ? `On ${a.status === "SELTIR" ? "season-ending LTIR" : a.status} (CapFreeze, since ${fmtDay(a.since, { day: "numeric", month: "short" })})` : "";
 }
 function outBadge(id) {
   const a = missedGames(id);
   if (!a) return "";
   const since = a.lastPlayed ? `Last played ${fmtDay(a.lastPlayed, { weekday: "short", day: "numeric", month: "short" })}` : "No games this season";
-  return ` <span class="out" title="${since}; ${a.team} has played ${a.missed} game${a.missed === 1 ? "" : "s"} since">missed ${a.missed}</span>`;
+  const title = [irText(a), `${since}; ${a.team} has played ${a.missed} game${a.missed === 1 ? "" : "s"} since`].filter(Boolean).join(". ");
+  return ` <span class="out" title="${esc(title)}">${a.status ? `${IR_LABEL[a.status] || esc(a.status)}${a.missed ? " · " : ""}` : ""}${a.missed ? `missed ${a.missed}` : ""}</span>`;
 }
 
 async function loadJSON(path) {

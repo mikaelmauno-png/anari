@@ -39,6 +39,7 @@ MONEYPUCK = "https://moneypuck.com/moneypuck/playerData/seasonSummary/{year}/reg
 MONEYPUCK_GOALIE_GAMES = "https://moneypuck.com/moneypuck/playerData/careers/gameByGame/regular/goalies/{id}.csv"
 FINAL_STATES = {"OFF", "FINAL"}
 CAPFREEZE_PLAYERS = "https://capfreeze.com/players.html"
+CAPFREEZE_TRANSACTIONS = "https://capfreeze.com/transactions.html"
 CAP_LOOKUPS_PER_DAY = 10
 
 
@@ -514,8 +515,17 @@ def write_gamelogs(f, league):
         entry["missed"] = sum(1 for d in team_days if last is None or d > last)
 
     write_json(os.path.join(DATA, "gamelogs.json"), {"updated": now_iso(), "logs": logs})
+    # IR/LTIR from CapFreeze, unless he's played since it showed up there
+    injured = (read_json(os.path.join(DATA, "injuries.json")) or {}).get("players", {})
+    def ir_status(e):
+        hit = injured.get(norm(e["name"])) or next(
+            (v for v in injured.values() if last_name(v["name"]) == last_name(e["name"]) and v["team"] == e["team"]), None)
+        if hit and (e["lastPlayed"] is None or e["lastPlayed"] < hit["since"]):
+            return {"status": hit["status"], "since": hit["since"]}
+        return {}
     write_json(os.path.join(DATA, "availability.json"), {"updated": now_iso(), "players": {
-        str(e["id"]): {"name": e["name"], "kind": e["kind"], "team": e["team"], "missed": e["missed"], "lastPlayed": e["lastPlayed"]}
+        str(e["id"]): {"name": e["name"], "kind": e["kind"], "team": e["team"], "missed": e["missed"],
+                       "lastPlayed": e["lastPlayed"], **ir_status(e)}
         for e in logs.values() if e["kind"] != "team"}})
 
 
@@ -556,6 +566,39 @@ def capfreeze_players():
         rows.append({"name": cells[0], "team": cells[1], "age": cells[3],
                      "cap": round(int(re.sub(r"[^0-9]", "", cells[4])) / 1e6, 3)})
     return rows
+
+
+def capfreeze_injuries():
+    """Each player's latest IR/LTIR designation from the "Injury designations"
+    tables on CapFreeze's transactions page, one section per data refresh,
+    newest first: {norm(name): {name, team, status, since}}. Status is the part
+    after "->": IR, LTIR, SELTIR (season-ending LTIR) or N (back)."""
+    page = get(CAPFREEZE_TRANSACTIONS)
+    out = {}
+    for sec in page.split('<h2 class="sec">')[1:]:
+        m = re.match(r"Update of (\d{4}-\d{2}-\d{2})", sec)
+        i = sec.find("Injury designations")
+        if not m or i < 0:
+            continue
+        for tr in re.findall(r"<tr>(.*?)</tr>", sec[i:].split("</table>", 1)[0], re.S):
+            cells = [html.unescape(re.sub(r"<[^>]+>", "", c)).strip() for c in re.findall(r"<td[^>]*>(.*?)</td>", tr, re.S)]
+            if len(cells) < 5 or "->" not in cells[4]:
+                continue
+            out.setdefault(norm(cells[0]), {"name": cells[0], "team": cells[1][:3],  # team badge, then its name
+                                            "status": cells[4].split("->")[-1].strip(), "since": m.group(1)})
+    return out
+
+
+def write_injuries():
+    """CapFreeze's IR/LTIR list, once a day (it refreshes every week or two)."""
+    path = os.path.join(DATA, "injuries.json")
+    store = read_json(path) or {}
+    today = date.today().isoformat()
+    if store.get("checked") == today:
+        return
+    players = capfreeze_injuries()
+    write_json(path, {"source": "CapFreeze transactions (capfreeze.com/transactions.html)", "checked": today,
+                      "players": {k: v for k, v in players.items() if v["status"] != "N"}})
 
 
 def match_capfreeze(skater, rows):
@@ -644,6 +687,10 @@ def main():
     write_weekly_snapshots(f)
     write_schedule()
     archive_finished_season(league)
+    try:
+        write_injuries()
+    except Exception as e:  # injuries are extra too
+        print(f"injury list failed: {e}", file=sys.stderr)
     try:
         write_gamelogs(f, league)
     except Exception as e:  # game logs are extra; never fail the whole update over them
