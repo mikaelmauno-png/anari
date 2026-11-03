@@ -9,6 +9,7 @@ Writes:
   data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
   data/schedule.json         regular-season games in the next 7 days
   data/seasons/<season>/     final stats and league file, saved once the regular season ends
+  data/seasons/index.json    list of the archived seasons (Past seasons page)
   data/gamelogs.json         game-by-game lines for every picked player and team
 
 Runs on a schedule in GitHub Actions (the NHL API and MoneyPuck don't allow
@@ -419,6 +420,16 @@ def archive_finished_season(league):
     if caps:
         write_json(os.path.join(folder, "caphits.json"), caps)
     print(f"archived final {stats['season']} season")
+    write_seasons_index()
+
+
+def write_seasons_index():
+    """List the archived seasons, newest first, for the Past seasons page."""
+    root = os.path.join(DATA, "seasons")
+    if not os.path.isdir(root):
+        return
+    seasons = sorted((d for d in os.listdir(root) if os.path.exists(os.path.join(root, d, "stats.json"))), reverse=True)
+    write_json(os.path.join(root, "index.json"), {"seasons": [int(d) for d in seasons]})
 
 
 # ---------- game logs of the picks ----------

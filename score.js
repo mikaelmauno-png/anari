@@ -194,10 +194,15 @@ function rankFinal(league, rows) {
 
 // Managers from last place to first, using the final ranking (tie for first
 // broken by category wins); any remaining tie keeps the league.json order.
-function draftOrder(league, stats) {
-  const { table } = computeStandings(league, stats);
+// Final standings: category points plus the playoff picks, 2 per team that made it
+function finalStandings(league, stats) {
+  const { results, table } = computeStandings(league, stats);
   const po = playoffPoints(league, stats.teams);
-  const rows = rankFinal(league, table.map(r => ({ ...r, total: r.total + (po[r.manager] || 0) })));
+  return { results, rows: rankFinal(league, table.map(r => ({ ...r, po: po[r.manager] || 0, total: r.total + (po[r.manager] || 0) }))) };
+}
+
+function draftOrder(league, stats) {
+  const { rows } = finalStandings(league, stats);
   const idx = m => league.managers.indexOf(m);
   return rows.slice().sort((a, b) => b.place - a.place || idx(a.manager) - idx(b.manager)).map(r => r.manager);
 }
@@ -367,6 +372,79 @@ function fmtValue(cat, e) {
 function pickLabel(cat, e) {
   if (e.item) return cat.kind === "team" ? esc(e.item.name) : `${esc(e.item.name)} <small>${esc(e.item.team)}</small>${outBadge(e.item.id)}`;
   return esc(typeof e.pick === "object" ? e.pick.player : e.pick);
+}
+
+// Seasons archived by the stats update in data/seasons/ (none until the first one ends)
+async function loadSeasonIndex() {
+  return ((await loadJSON("data/seasons/index.json").catch(() => null)) || {}).seasons || [];
+}
+async function showPastSeasonsLink() {
+  if (!finalPreview() && !(await loadSeasonIndex()).length) return;
+  document.querySelectorAll(".seasons-link").forEach(el => { el.hidden = false; });
+}
+
+// Winner banner of a finished season. The trophy replays the confetti.
+function bannerHTML(league, season, rows, note = "") {
+  const winners = rows.filter(r => r.place === 1);
+  const names = winners.map(r => esc(r.manager)).join(" and ");
+  const runnerUp = rows.find(r => r.place > 1);
+  return `
+    <div class="banner">
+      <button type="button" class="trophy" aria-label="Celebrate again" title="Celebrate again">🏆</button>
+      <div>
+        <div class="banner-title">${names} ${winners.length > 1 ? "share" : "wins"} the ${seasonLabel(season)} ${esc(league.name)}</div>
+        <div class="muted">${winners.length > 1
+          ? `${winners[0].total} points and ${winners[0].wins} category wins each`
+          : rows.decidedByWins
+            ? `${winners[0].total} points, level with ${esc(runnerUp.manager)}; won on category wins (${winners[0].wins} vs ${runnerUp.wins})`
+            : `${winners[0].total} points${runnerUp ? ` · runner-up ${esc(runnerUp.manager)} ${runnerUp.total}` : ""}`}${note}</div>
+      </div>
+    </div>`;
+}
+
+// Confetti bursting from the banner's trophy, in the managers' colors and gold.
+// Skipped when the device asks for reduced motion.
+function celebrate(from) {
+  if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const css = getComputedStyle(document.documentElement);
+  const colors = ["--s1", "--s2", "--s3", "--s4", "--gold"].map(v => css.getPropertyValue(v).trim());
+  const canvas = document.createElement("canvas");
+  canvas.className = "confetti";
+  canvas.setAttribute("aria-hidden", "true");
+  document.body.append(canvas);
+  const w = innerWidth, h = innerHeight, dpr = devicePixelRatio || 1;
+  canvas.width = w * dpr;
+  canvas.height = h * dpr;
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+  const box = from ? from.getBoundingClientRect() : { left: w / 2, top: h / 3, width: 0, height: 0 };
+  const x0 = box.left + box.width / 2, y0 = box.top + box.height / 2;
+  const bits = Array.from({ length: 180 }, (_, i) => {
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, speed = 6 + Math.random() * 11;
+    return { x: x0, y: y0, vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 3, vy: Math.sin(angle) * speed,
+      w: 5 + Math.random() * 5, h: 8 + Math.random() * 6, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.35,
+      color: colors[i % colors.length] };
+  });
+  const start = performance.now(), length = 4200;
+  const frame = now => {
+    const age = now - start;
+    ctx.clearRect(0, 0, w, h);
+    ctx.globalAlpha = Math.min(1, (length - age) / 1000);
+    for (const b of bits) {
+      b.vy += 0.3; b.vx *= 0.985; b.vy *= 0.985;
+      b.x += b.vx; b.y += b.vy; b.rot += b.spin;
+      ctx.save();
+      ctx.translate(b.x, b.y);
+      ctx.rotate(b.rot);
+      ctx.scale(1, Math.cos(b.rot * 2));  // tumbling
+      ctx.fillStyle = b.color;
+      ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      ctx.restore();
+    }
+    if (age < length) requestAnimationFrame(frame);
+    else canvas.remove();
+  };
+  requestAnimationFrame(frame);
 }
 
 // ---------- shared page helpers ----------

@@ -15,8 +15,7 @@ function render(league, stats) {
   // At the end of the season the playoff picks count: 2 points per team that made it
   let rows = table;
   if (over) {
-    const po = playoffPoints(league, stats.teams);
-    rows = rankFinal(league, table.map(r => ({ ...r, po: po[r.manager] || 0, total: r.total + (po[r.manager] || 0) })));
+    rows = finalStandings(league, stats).rows;
     renderBanner(league, stats, rows);
   }
   const head = CATEGORIES.map(c => `<th title="${esc(c.label)}">${SHORT[c.key]}</th>`).join("");
@@ -73,23 +72,20 @@ function renderBest(cat, best, unsure) {
       </div>`;
 }
 
+// The first time a device sees the final standings of a season, confetti.
+const CELEBRATED_KEY = "anari-celebrated"; // seasons this device has celebrated
 function renderBanner(league, stats, rows) {
-  const winners = rows.filter(r => r.place === 1);
-  const names = winners.map(r => esc(r.manager)).join(" and ");
-  const runnerUp = rows.find(r => r.place > 1);
-  document.getElementById("banner").innerHTML = `
-    <div class="banner">
-      <div class="trophy" aria-hidden="true">🏆</div>
-      <div>
-        <div class="banner-title">${names} ${winners.length > 1 ? "share" : "wins"} the ${seasonLabel(stats.season)} ${esc(league.name)}</div>
-        <div class="muted">${winners.length > 1
-          ? `${winners[0].total} points and ${winners[0].wins} category wins each`
-          : rows.decidedByWins
-            ? `${winners[0].total} points, level with ${esc(runnerUp.manager)}; won on category wins (${winners[0].wins} vs ${runnerUp.wins})`
-            : `${winners[0].total} points${runnerUp ? ` · runner-up ${esc(runnerUp.manager)} ${runnerUp.total}` : ""}`}${
-          finalPreview() ? " · preview, the season isn't over yet" : ""}</div>
-      </div>
-    </div>`;
+  const el = document.getElementById("banner");
+  el.innerHTML = bannerHTML(league, stats.season, rows, finalPreview() ? " · preview, the season isn't over yet" : "");
+  const trophy = el.querySelector(".trophy");
+  trophy.addEventListener("click", () => celebrate(trophy));
+  // The preview celebrates on every load without using up the real one
+  if (!finalPreview()) {
+    const seen = readStore(CELEBRATED_KEY, []);
+    if (seen.includes(stats.season)) return;
+    writeStore(CELEBRATED_KEY, [...seen, stats.season]);
+  }
+  setTimeout(() => celebrate(trophy), 400);
 }
 
 // Final standings if everyone keeps their current pace, playoff picks included.
@@ -165,6 +161,7 @@ async function main() {
   try {
     const [league, stats] = await Promise.all([loadLeague(), loadJSON("data/stats.json")]);
     render(league, stats);
+    showPastSeasonsLink();
     spoilerGate(league, [document.getElementById("standings"), ...document.querySelectorAll(".projection"),
       document.getElementById("categories")]);
   } catch (err) {
