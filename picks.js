@@ -33,6 +33,9 @@ function menu(league, logs, choice) {
           stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg></span></label>`;
 }
 
+const missedText = a => `${a.lastPlayed ? `Hasn't played since ${gameDay(a.lastPlayed)}` : "Hasn't played this season"}:
+  ${esc(a.team)} has played ${a.missed} game${a.missed === 1 ? "" : "s"} without him. Injury, healthy scratch or suspension${a.kind === "goalie" ? ", or the backup's starts" : ""}.`;
+
 let TEAM_NAMES = {};
 const teamName = abbrev => TEAM_NAMES[abbrev] || abbrev;
 
@@ -79,9 +82,10 @@ function render(league, logs, choice) {
   const others = [...new Set(entry.picks.filter(p => p.manager !== manager).map(p => p.manager))];
   document.getElementById("pick-head").innerHTML = `
     <h3><span class="swatch" style="background:${color}"></span>${esc(entry.name || teamName(entry.abbrev))}
-      ${entry.team ? `<small>${esc(entry.team)}</small>` : ""}</h3>
+      ${entry.team ? `<small>${esc(entry.team)}</small>` : ""}${entry.id ? outBadge(entry.id) : ""}</h3>
     <p class="muted">${esc(manager)}'s pick · ${esc(cats)}${others.length ? ` · also picked by ${others.map(esc).join(", ")}` : ""}</p>
-    <p class="sum">${summary(entry)}</p>`;
+    <p class="sum">${summary(entry)}</p>
+    ${entry.id && missedGames(entry.id) ? `<p class="hint">${missedText(missedGames(entry.id))}</p>` : ""}`;
 
   // Season building up game by game
   const stat = mainStat(entry);

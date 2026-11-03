@@ -3,6 +3,16 @@
   "season": 20262027,
   "scoring": [5, 3, 2, 1],
   "managers": ["Mauno", "Nynny", "Atte", "Santeri"],
+  "pickOrder": {
+    "goals":      ["Atte", "Mauno", "Nynny", "Santeri"],
+    "points":     ["Mauno", "Nynny", "Santeri", "Atte"],
+    "finnish":    ["Nynny", "Santeri", "Atte", "Mauno"],
+    "rookies":    ["Santeri", "Atte", "Mauno", "Nynny"],
+    "value":      ["Atte", "Mauno", "Nynny", "Santeri"],
+    "pim":        ["Mauno", "Nynny", "Santeri", "Atte"],
+    "gsax":       ["Nynny", "Santeri", "Atte", "Mauno"],
+    "presidents": ["Santeri", "Atte", "Mauno", "Nynny"]
+  },
   "picks": {
     "goals":      { "Mauno": ["McDavid"],    "Nynny": ["Kaprizov"],  "Atte": ["MacKinnon"],           "Santeri": ["Caufield"] },
     "points":     { "Mauno": ["McDavid"],    "Nynny": ["Celebrini"], "Atte": ["Kucherov"],            "Santeri": ["MacKinnon"] },

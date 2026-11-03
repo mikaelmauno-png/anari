@@ -59,6 +59,16 @@ li.scored .pts { color: var(--accent); }
 .warn { color: var(--warn); font-size: 12px; }
 .best { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
 .best span { color: var(--muted); }
+.best ol { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
+.best li { display: grid; grid-template-columns: 14px 64px minmax(0, 1fr) auto; grid-template-areas: "slot mgr pick val"; column-gap: 8px; align-items: baseline; }
+.best .bslot { grid-area: slot; font-variant-numeric: tabular-nums; }
+.best .bmgr { grid-area: mgr; }
+.best li .pick { grid-area: pick; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.best .bval { grid-area: val; text-align: right; font-variant-numeric: tabular-nums; color: var(--text); white-space: nowrap; }
+@media (max-width: 560px) {
+  .best li { grid-template-columns: 14px minmax(0, 1fr) auto; grid-template-areas: "slot mgr val" "slot pick pick"; }
+}
+.best li.me { box-shadow: inset 2px 0 0 var(--accent); margin-left: -10px; padding-left: 8px; }
 .card.wide { grid-column: 1 / -1; }
 .hint { color: var(--muted); font-size: 13px; margin: 8px 0; }
 .cands { margin-top: 10px; }
@@ -184,3 +194,7 @@ ol.rank li.me { background: var(--accent-soft); border-radius: 8px; margin: 0 -8
   nav.tabs a { flex: 1 1 auto; padding: 6px 3px; font-size: 13px; letter-spacing: -0.01em; }
 }
 @media (max-width: 350px) { nav.tabs a { font-size: 12px; padding: 6px 2px; } }
+
+/* A pick who's missed his team's latest games */
+.out { display: inline-block; margin-left: 4px; padding: 0 5px; border: 1px solid currentColor; border-radius: 6px;
+  color: var(--down); font-size: 11px; font-weight: 600; line-height: 16px; white-space: nowrap; vertical-align: 1px; }

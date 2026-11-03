@@ -306,27 +306,36 @@ function valueCandidates(league, stats, best, limit = 12) {
   return { list: all.slice(0, limit), total: all.length };
 }
 
-// The best pick anyone could have made: the leader among all eligible players.
-// For €/point only players with a known cap hit count.
-function bestPick(cat, stats) {
+// Every eligible player, best first. For €/point only players with a known cap
+// hit count.
+function rankedPicks(cat, stats) {
   const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
   let candidates;
   if (cat.key === "value") {
     candidates = pool.filter(s => s.cap && !s.elc).map(s => ({ item: s, cap: s.cap, value: costValue(s.p, s.cap) }));
-    if (!candidates.length) return null;
   } else {
     candidates = pool.filter(x => !cat.check || !cat.check(x))
       .map(x => ({ item: x, value: cat.value(x), tb: cat.tiebreak && cat.tiebreak(x) }));
   }
   candidates.sort(compareEntries);
-  return candidates[0] || null;
+  return candidates;
+}
+
+// The best pick each manager could have made in this season's pick order
+// (league.pickOrder): everyone gets the best player nobody ahead of them took.
+// Without a pick order, just the single best pick.
+function bestPicks(cat, league, stats) {
+  const ranked = rankedPicks(cat, stats);
+  const order = (league.pickOrder || {})[cat.key];
+  if (!order) return ranked.slice(0, 1);
+  return order.map((manager, i) => ({ manager, slot: i + 1, ...ranked[i] }));
 }
 
 function computeStandings(league, stats) {
   const capWarnings = applyCapHits(league, stats);
-  const results = CATEGORIES.map(cat => ({ cat, entries: scoreCategory(cat, league, stats), best: bestPick(cat, stats) }));
+  const results = CATEGORIES.map(cat => ({ cat, entries: scoreCategory(cat, league, stats), best: bestPicks(cat, league, stats) }));
   const value = results.find(r => r.cat.key === "value");
-  value.candidates = valueCandidates(league, stats, value.best);
+  value.candidates = valueCandidates(league, stats, value.best[0]?.item ? value.best[0] : null);
   value.capWarnings = capWarnings;
   const table = league.managers.map(manager => {
     const byCat = {};
@@ -356,7 +365,7 @@ function fmtValue(cat, e) {
 }
 
 function pickLabel(cat, e) {
-  if (e.item) return cat.kind === "team" ? esc(e.item.name) : `${esc(e.item.name)} <small>${esc(e.item.team)}</small>`;
+  if (e.item) return cat.kind === "team" ? esc(e.item.name) : `${esc(e.item.name)} <small>${esc(e.item.team)}</small>${outBadge(e.item.id)}`;
   return esc(typeof e.pick === "object" ? e.pick.player : e.pick);
 }
 
@@ -444,13 +453,30 @@ function unlockSpoilers() {
   document.querySelectorAll(".spoiler-hidden").forEach(el => el.classList.remove("spoiler-hidden"));
 }
 
-// league.json plus the cap hits looked up so far (missing file is fine)
+// league.json plus the cap hits looked up so far (missing files are fine)
 async function loadLeague() {
-  const [league, caps] = await Promise.all([
+  const [league, caps, avail] = await Promise.all([
     loadJSON("league.json"), loadJSON("data/caphits.json").catch(() => null),
+    loadJSON("data/availability.json").catch(() => null),
   ]);
   league.lookedUpCaps = caps;
+  AVAILABILITY = (avail && avail.players) || {};
   return league;
+}
+
+// Picked players who've missed their team's latest games (injury, scratch or
+// suspension), from data/availability.json. Goalies only from 3 in a row,
+// since a backup starting once or twice is normal.
+let AVAILABILITY = {};
+function missedGames(id) {
+  const a = AVAILABILITY[id];
+  return a && a.missed >= (a.kind === "goalie" ? 3 : 1) ? a : null;
+}
+function outBadge(id) {
+  const a = missedGames(id);
+  if (!a) return "";
+  const since = a.lastPlayed ? `Last played ${fmtDay(a.lastPlayed, { weekday: "short", day: "numeric", month: "short" })}` : "No games this season";
+  return ` <span class="out" title="${since}; ${a.team} has played ${a.missed} game${a.missed === 1 ? "" : "s"} since">missed ${a.missed}</span>`;
 }
 
 async function loadJSON(path) {

@@ -48,14 +48,26 @@ function render(league, stats) {
             <span class="pts">${e.points ? "+" + e.points : "0"}</span>
           </li>`).join("")}
       </ol>
-      <p class="best">${best
-        ? `${candidates && candidates.total ? "Best known pick" : "Best possible pick"}: <b>${pickLabel(cat, best)}</b> <span>${fmtValue(cat, best)}</span>`
-        : "Best possible pick: no data"}</p>
+      ${renderBest(cat, best, candidates && candidates.total)}
       ${candidates ? renderCandidates(league, candidates, capWarnings, stats) : ""}
     </section>`).join("");
 
   if (over) document.querySelectorAll(".projection").forEach(el => { el.hidden = true; });
   else renderProjection(league, stats);
+}
+
+// Best possible picks, one per manager in pick order (or just the best one
+// without a pick order). With €/point cap hits still missing they're "known".
+function renderBest(cat, best, unsure) {
+  const title = `Best ${unsure ? "known" : "possible"} pick${best.length > 1 ? "s" : ""}`;
+  if (!best.some(b => b.item)) return `<p class="best">${title}: no data</p>`;
+  if (!best[0].manager) return `<p class="best">${title}: <b>${pickLabel(cat, best[0])}</b> <span>${fmtValue(cat, best[0])}</span></p>`;
+  return `
+      <div class="best">${title} <span>in pick order</span>
+        <ol>${best.map(b => `
+          <li class="${meClass(b.manager)}"><span class="bslot">${b.slot}</span><b class="bmgr">${esc(b.manager)}</b>
+            <span class="pick">${b.item ? pickLabel(cat, b) : "–"}</span><span class="bval">${fmtValue(cat, b)}</span></li>`).join("")}</ol>
+      </div>`;
 }
 
 function renderBanner(league, stats, rows) {

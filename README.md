@@ -15,11 +15,12 @@ Standings for our NHL fantasy league. Eight categories, scored 5 / 3 / 2 / 1 for
 
 ## Pages
 
-- **Standings** (`index.html`): totals, every category, best possible picks.
+- **Standings** (`index.html`): totals, every category, and each manager's best possible pick in that category's pick order (`pickOrder` in `league.json`): everyone gets the best player nobody ahead of them took.
 - **Last round** (`round.html`): the latest game night as soon as its first game has started (stat lines from the NHL box scores, so live games show too, marked as live or not started at the last update) and fantasy score changes this week and last week.
 - **Playoffs** (`playoffs.html`): how many of each manager's playoff picks (8 East + 8 West, in `playoffs` in `league.json`) are in a playoff spot now. 2 points per correct team, not yet counted in the totals.
 - **Next round** (`next.html`): who plays on the next game night, with opponents and local start times, and each manager's games over the next 7 days.
 - **Picks** (`picks.html`): game-by-game stats of any pick, chosen from a menu grouped by manager: skaters' goals, assists, points, PIM and ice time; goalies' saves, save % and GSAx; teams' results. The fetch script writes these to `data/gamelogs.json`.
+- **Missed games:** picks who haven't played in their team's latest games get a red *missed N* badge on the standings cards, Next round and Picks (goalies only after 3, since backups start some games). It comes from the NHL game logs and team schedules (`data/availability.json`), so it covers injuries, healthy scratches and suspensions without telling them apart, and shows from the first missed game. ESPN's injury feed would give reasons, but Disney's terms forbid automated access, so it isn't used.
 - **Trend** (`trend.html`): each manager's points above or below the league average at the end of every week (Monday–Sunday). Below it, *Category trend* picks any category from a dropdown and shows either each manager's category points or their pick's underlying stat, week by week plus the latest stats as “Now”.
 
 - **Settings** (`settings.html`, the gear icon in the top right corner): per-device preferences. *Who are you?* highlights your rows and picks and puts your cards first. *Last game night cards* start hidden or revealed; cards you turn stay turned until the next game night. *Spoiler-free mode* covers the standings, category cards, weekly changes, scores and playoff picture until you've turned your own card (or tap “Show anyway”).

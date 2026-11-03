@@ -12,7 +12,7 @@ function managerPicks(league, stats, manager) {
       if (!item) continue;
       const team = cat.kind === "team" ? item.abbrev : item.team;
       const key = `${cat.kind}:${item.id || item.abbrev}`;
-      if (!rows.has(key)) rows.set(key, { name: item.name, team, kind: cat.kind, cats: [] });
+      if (!rows.has(key)) rows.set(key, { id: item.id, name: item.name, team, kind: cat.kind, cats: [] });
       rows.get(key).cats.push(SHORT[cat.key]);
     }
   }
@@ -39,7 +39,7 @@ function renderNextNight(league, stats, schedule) {
         ${playing.length ? `<ul class="lines">${playing.map(p => {
           const g = gameOf(p.team);
           const home = g.home === p.team;
-          return `<li><span><b>${esc(p.name)}</b> ${p.kind !== "team" ? `<small>${esc(p.team)}</small>` : ""}
+          return `<li><span><b>${esc(p.name)}</b> ${p.kind !== "team" ? `<small>${esc(p.team)}</small>${outBadge(p.id)}` : ""}
               <small class="cats">${p.cats.join(" · ")}</small></span>
             <span class="val">${home ? "vs" : "at"} ${esc(home ? g.away : g.home)}<br><small>${fmtTime(g.start)}</small></span></li>`;
         }).join("")}</ul>` : `<p class="muted">No picks playing.</p>`}
@@ -74,7 +74,7 @@ function renderWeekAhead(league, stats, schedule) {
       <h3><span class="swatch" style="background:${managerColor(league, c.m)}"></span>${esc(c.m)}
         <span class="muted">· ${c.total} games${c.total === most ? " · most" : ""}</span></h3>
       <ul class="lines">${c.list.map(r => `
-        <li><span><b>${esc(r.name)}</b> ${r.kind !== "team" ? `<small>${esc(r.team)}</small>` : ""}
+        <li><span><b>${esc(r.name)}</b> ${r.kind !== "team" ? `<small>${esc(r.team)}</small>${outBadge(r.id)}` : ""}
           <small class="cats">${r.cats.join(" · ")}</small></span>
           <span class="val ${r.n >= 4 ? "up" : r.n <= 2 ? "muted" : ""}">${r.n} game${r.n === 1 ? "" : "s"}</span></li>`).join("")}</ul>
     </section>`).join("")}</div>

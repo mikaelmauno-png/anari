@@ -459,9 +459,15 @@ def write_gamelogs(f, league):
                         logs[key] = {"kind": kind, "id": item["id"], "name": item["name"], "team": item["team"], "picks": []}
                 logs[key]["picks"].append({"manager": manager, "cat": cat})
 
+    schedules = {}
+    def club_schedule(abbrev):
+        if abbrev not in schedules:
+            schedules[abbrev] = json.loads(get(f"{WEB_API}/club-schedule-season/{abbrev}/{f.season}", pause=0.3))
+        return schedules[abbrev]
+
     for key, entry in logs.items():
         if entry["kind"] == "team":
-            data = json.loads(get(f"{WEB_API}/club-schedule-season/{entry['abbrev']}/{f.season}", pause=0.3))
+            data = club_schedule(entry["abbrev"])
             games = []
             for g in data["games"]:
                 if g.get("gameType") != 2 or g["gameState"] not in FINAL_STATES:
@@ -495,7 +501,22 @@ def write_gamelogs(f, league):
                 line["gsax"] = round(r["xga"] - r["ga"], 2) if r else None  # MoneyPuck can lag a few hours
         entry["games"] = games
 
+        # Team games played since his last one: injured, scratched or suspended
+        # (or, for a goalie, often just the backup's starts)
+        last = games[-1]["date"] if games else None
+        try:
+            team_days = [g["gameDate"] for g in club_schedule(entry["team"])["games"]
+                         if g.get("gameType") == 2 and g["gameState"] in FINAL_STATES]
+        except Exception as e:
+            print(f"no schedule for {entry['team']}: {e}", file=sys.stderr)
+            team_days = []
+        entry["lastPlayed"] = last
+        entry["missed"] = sum(1 for d in team_days if last is None or d > last)
+
     write_json(os.path.join(DATA, "gamelogs.json"), {"updated": now_iso(), "logs": logs})
+    write_json(os.path.join(DATA, "availability.json"), {"updated": now_iso(), "players": {
+        str(e["id"]): {"name": e["name"], "kind": e["kind"], "team": e["team"], "missed": e["missed"], "lastPlayed": e["lastPlayed"]}
+        for e in logs.values() if e["kind"] != "team"}})
 
 
 # ---------- cap hits ----------
