@@ -322,13 +322,21 @@ function rankedPicks(cat, stats) {
 }
 
 // The best pick each manager could have made in this season's pick order
-// (league.pickOrder): everyone gets the best player nobody ahead of them took.
-// Without a pick order, just the single best pick.
+// (league.pickOrder): the best player none of the managers ahead actually
+// picked. Without a pick order, just the single best pick.
 function bestPicks(cat, league, stats) {
   const ranked = rankedPicks(cat, stats);
   const order = (league.pickOrder || {})[cat.key];
   if (!order) return ranked.slice(0, 1);
-  return order.map((manager, i) => ({ manager, slot: i + 1, ...ranked[i] }));
+  const pool = { skater: stats.skaters, goalie: stats.goalies, team: stats.teams }[cat.kind];
+  const taken = new Set();
+  return order.map((manager, i) => {
+    const best = ranked.find(r => !taken.has(r.item));
+    let picks = (league.picks[cat.key] || {})[manager] || [];
+    if (!Array.isArray(picks)) picks = [picks];
+    for (const pick of picks) taken.add(resolve(pick, pool, cat.kind, cat.check).item);
+    return { manager, slot: i + 1, ...best };
+  });
 }
 
 function computeStandings(league, stats) {
