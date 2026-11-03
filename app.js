@@ -56,17 +56,20 @@ function render(league, stats) {
   else renderProjection(league, stats);
 }
 
-// Best possible picks, one per manager in pick order (or just the best one
-// without a pick order). With €/point cap hits still missing they're "known".
+// The best possible pick overall, and under it a dropdown with each manager's
+// best pick in pick order. With €/point cap hits still missing they're "known".
 function renderBest(cat, best, unsure) {
-  const title = `Best ${unsure ? "known" : "possible"} pick${best.length > 1 ? "s" : ""}`;
+  const title = `Best ${unsure ? "known" : "possible"} pick`;
   if (!best.some(b => b.item)) return `<p class="best">${title}: no data</p>`;
-  if (!best[0].manager) return `<p class="best">${title}: <b>${pickLabel(cat, best[0])}</b> <span>${fmtValue(cat, best[0])}</span></p>`;
+  const top = `${title}: <b>${pickLabel(cat, best[0])}</b> <span>${fmtValue(cat, best[0])}</span>`;
+  if (!best[0].manager) return `<p class="best">${top}</p>`;
   return `
-      <div class="best">${title} <span>in pick order</span>
-        <ol>${best.map(b => `
-          <li class="${meClass(b.manager)}"><span class="bslot">${b.slot}</span><b class="bmgr">${esc(b.manager)}</b>
-            <span class="pick">${b.item ? pickLabel(cat, b) : "–"}</span><span class="bval">${fmtValue(cat, b)}</span></li>`).join("")}</ol>
+      <div class="best">${top}
+        <details><summary>Each manager in pick order</summary>
+          <ol>${best.map(b => `
+            <li class="${meClass(b.manager)}"><span class="bslot">${b.slot}</span><b class="bmgr">${esc(b.manager)}</b>
+              <span class="pick">${b.item ? pickLabel(cat, b) : "–"}</span><span class="bval">${fmtValue(cat, b)}</span></li>`).join("")}</ol>
+        </details>
       </div>`;
 }
 

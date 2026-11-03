@@ -59,6 +59,7 @@ li.scored .pts { color: var(--accent); }
 .warn { color: var(--warn); font-size: 12px; }
 .best { margin: 8px 0 0; padding: 8px 10px; border-radius: 8px; background: var(--accent-soft); font-size: 13px; }
 .best span { color: var(--muted); }
+.best summary { cursor: pointer; margin-top: 4px; color: var(--accent); font-weight: 600; }
 .best ol { list-style: none; margin: 6px 0 0; padding: 0; display: grid; gap: 4px; }
 .best li { display: grid; grid-template-columns: 14px 64px minmax(0, 1fr) auto; grid-template-areas: "slot mgr pick val"; column-gap: 8px; align-items: baseline; }
 .best .bslot { grid-area: slot; font-variant-numeric: tabular-nums; }
