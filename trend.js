@@ -66,12 +66,13 @@ function renderCategoryTrend(league, points) {
       zeroLine: cat.key === "gsax",
       integer: cat.key !== "gsax",
       lowerIsBetter: cat.key === "value",
+      log: cat.key === "value",
       fmt: statFmt(cat), tipTitle,
     });
   }
   document.getElementById("cat-note").textContent = mode === "points"
     ? `Category points (${league.scoring.join("/")}) each week in ${cat.label.toLowerCase()}.`
-    : cat.key === "value" ? "Cap hit per point in thousands of euros: lower is better. No line before a pick's first point."
+    : cat.key === "value" ? "Cap hit per point in thousands of euros: lower is better. Log scale: each gridline is about double the one below, so early-season spikes don't flatten the rest. No line before a pick's first point."
     : cat.kind === "team" ? "The picked team's standings points."
     : `Each manager's pick: ${{ G: "goals", P: "points", PIM: "penalty minutes" }[cat.unit] || cat.unit} so far this season.`;
 }
@@ -87,7 +88,7 @@ function renderTable(league, weeks) {
       <td class="muted">${w.avg.toFixed(1)}</td>
     </tr>`).join("");
   document.getElementById("table").innerHTML = `
-    <div class="scroll"><table>
+    <div class="scroll"><table class="weeks">
       <thead><tr><th class="mgr">Week to</th>${head}<th>Avg</th></tr></thead>
       <tbody>${rows}</tbody>
     </table></div>`;

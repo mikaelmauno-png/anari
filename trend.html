@@ -14,6 +14,18 @@
   <noscript><link rel="stylesheet" href="style.css"></noscript>
   <style>
       td small { display: block; }
+      /* By week: fits a phone without scrolling */
+      table.weeks { table-layout: fixed; }
+      table.weeks th.mgr { width: 64px; }
+      table.weeks thead th:last-child { width: 44px; }
+      @media (max-width: 560px) {
+        table.weeks th, table.weeks td { padding: 8px 2px; font-size: 14px; }
+        table.weeks thead th { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
+        table.weeks thead .swatch { display: block; margin: 0 auto 3px; }
+        table.weeks th.mgr { width: 50px; padding-left: 8px; position: static; }
+        table.weeks thead th:last-child { width: 36px; }
+        table.weeks td small { font-size: 11px; }
+      }
   </style>
 </head>
 <body>

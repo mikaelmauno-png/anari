@@ -44,27 +44,45 @@ function autoRange(vals, opts) {
 // so text stays readable on a phone. Hover/tap snaps to the nearest point and
 // lists every manager.
 //   xs: x labels; series: [{ name, color, values: [number|null], extra?: [string] }]
-//   opts: { id, aria, lim?: [min, max], step?, integer?, zeroLabel?, fmt(v), tipTitle(i) }
+//   opts: { id, aria, lim?: [min, max], step?, integer?, log?, zeroLabel?, fmt(v), tipTitle(i) }
 function drawChart(el, xs, series, opts) {
   const compact = !!opts.compact;  // small multiples: no legend or end labels
   const PAD = compact ? { ...CHART_PAD, right: 14, top: 10 } : CHART_PAD;
   const W = Math.max(compact ? 220 : 280, el.clientWidth - (compact ? 0 : 32));
   const H = compact ? 150 : W < 500 ? 240 : 300;
   const vals = series.flatMap(s => s.values).filter(v => v != null && isFinite(v));
-  let [lo, hi] = opts.lim || autoRange(vals, opts);
-  const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1, lo, hi, opts.integer ? 1 : 0);
-  lo = Math.floor(lo / step + 1e-9) * step; hi = Math.ceil(hi / step - 1e-9) * step;
-  if (hi <= lo) hi = lo + step;
-  const decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+  let lo, hi, ticks, decimals = 0, scale = v => v;
+  if (opts.log) {
+    // Log scale: equal ratios get equal heights, so 300 vs 400 stays readable
+    // next to a 3000 from a pick's first week
+    const pos = vals.filter(v => v > 0);
+    const dlo = pos.length ? Math.min(...pos) : 1, dhi = pos.length ? Math.max(...pos) : 10;
+    const all = [];
+    for (let e = Math.floor(Math.log10(dlo)); e <= Math.ceil(Math.log10(dhi)); e++)
+      for (const m of [1, 2, 5]) all.push(m * 10 ** e);
+    lo = Math.max(...all.filter(t => t <= dlo + 1e-9));
+    hi = Math.min(...all.filter(t => t >= dhi - 1e-9));
+    if (hi <= lo) hi = all[all.indexOf(lo) + 1];
+    ticks = all.filter(t => t >= lo && t <= hi);
+    if (ticks.length > 6) ticks = ticks.filter(t => t === lo || t === hi || !/^2/.test(String(t)));
+    scale = Math.log10;
+  } else {
+    [lo, hi] = opts.lim || autoRange(vals, opts);
+    const step = opts.step || niceStep(hi - lo || Math.abs(hi) || 1, lo, hi, opts.integer ? 1 : 0);
+    lo = Math.floor(lo / step + 1e-9) * step; hi = Math.ceil(hi / step - 1e-9) * step;
+    if (hi <= lo) hi = lo + step;
+    decimals = Math.max(0, -Math.floor(Math.log10(step) + 1e-9));
+    ticks = [];
+    for (let k = 0; lo + k * step <= hi + 1e-9; k++) ticks.push(+(lo + k * step).toFixed(decimals));  // no 0.30000000000000004 labels
+  }
   const clip = v => Math.min(Math.max(v, lo), hi);
   const x = i => xs.length === 1
     ? PAD.left + (W - PAD.left - PAD.right) / 2
     : PAD.left + i * (W - PAD.left - PAD.right) / (xs.length - 1);
-  const y = v => PAD.top + (hi - clip(v)) * (H - PAD.top - PAD.bottom) / (hi - lo);
+  const y = v => PAD.top + (scale(hi) - scale(clip(v))) * (H - PAD.top - PAD.bottom) / (scale(hi) - scale(lo));
 
   const grid = [];
-  for (let k = 0; lo + k * step <= hi + 1e-9; k++) {
-    const v = +(lo + k * step).toFixed(decimals);  // no 0.30000000000000004 labels
+  for (const v of ticks) {
     grid.push(`<line class="${v === 0 && (opts.zeroLabel || opts.zeroLine) ? "zero" : "gridline"}" x1="${PAD.left}" x2="${W - PAD.right}" y1="${y(v)}" y2="${y(v)}"/>
       <text class="axis" x="${PAD.left - 8}" y="${y(v) + 4}" text-anchor="end">${opts.axisFmt ? opts.axisFmt(v) : v.toFixed(decimals)}</text>`);
   }
