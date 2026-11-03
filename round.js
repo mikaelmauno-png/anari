@@ -79,8 +79,58 @@ function nightForManager(league, stats, night, manager) {
   return { rows: [...rows.values()], idle: [...idle], later: [...later] };
 }
 
-function renderNight(league, stats, night) {
+// One way of turning the cards per game night, the same for everyone that day,
+// picked from the date. ?reveal=lift (etc.) forces one for testing.
+const REVEALS = ["lift", "lines", "deal", "winner"];
+function revealStyle(date) {
+  const forced = new URLSearchParams(location.search).get("reveal");
+  if (REVEALS.includes(forced)) return forced;
+  let h = 2166136261;
+  for (const c of date) h = Math.imul(h ^ c.charCodeAt(0), 16777619);
+  // Final mix so neighbouring dates don't just cycle through the styles
+  h = Math.imul(h ^ (h >>> 16), 2246822507);
+  h = Math.imul(h ^ (h >>> 13), 3266489909);
+  return REVEALS[((h ^ (h >>> 16)) >>> 0) % REVEALS.length];
+}
+
+// Managers whose fantasy total rose the most from the night's games: standings
+// now against standings with the night's skater and goalie lines taken out
+// (team results stay, their rank can't be undone from one night). Standings
+// seldom move in a night, so then it's the most points by their skaters.
+function nightWinners(league, stats, night) {
+  const byGain = standingsGainLeaders(league, stats, night);
+  if (byGain.size) return byGain;
+  const lines = new Map(night.skaters.map(s => [s.id, s]));
+  const score = m => {
+    const ids = new Set();
+    for (const cat of CATEGORIES.filter(c => c.kind === "skater"))
+      for (const pick of (league.picks[cat.key] || {})[m] || []) {
+        const { item } = resolve(pick, stats.skaters, "skater", cat.check);
+        if (item) ids.add(item.id);
+      }
+    const got = [...ids].map(id => lines.get(id)).filter(Boolean);
+    return got.reduce((s, l) => s + l.p, 0) * 100 + got.reduce((s, l) => s + l.g, 0);
+  };
+  const scores = league.managers.map(m => [m, score(m)]);
+  const top = Math.max(...scores.map(([, s]) => s));
+  return new Set(top > 0 ? scores.filter(([, s]) => s === top).map(([m]) => m) : []);
+}
+
+function standingsGainLeaders(league, stats, night) {
+  const sk = new Map(night.skaters.map(s => [s.id, s]));
+  const go = new Map(night.goalies.map(g => [g.id, g]));
+  const before = { ...stats,
+    skaters: stats.skaters.map(s => { const l = sk.get(s.id); return l ? { ...s, g: s.g - l.g, p: s.p - l.p, pim: s.pim - l.pim } : { ...s }; }),
+    goalies: stats.goalies.map(g => { const l = go.get(g.id); return l && l.gsax != null ? { ...g, gsax: g.gsax - l.gsax } : { ...g }; }) };
+  const then = new Map(computeStandings(league, before).table.map(r => [r.manager, r.total]));
+  const gains = computeStandings(league, stats).table.map(r => [r.manager, r.total - then.get(r.manager)]);
+  const top = Math.max(...gains.map(([, d]) => d));
+  return new Set(top > 0 ? gains.filter(([, d]) => d === top).map(([m]) => m) : []);
+}
+
+function renderNight(league, stats, night, reveal) {
   const revealAll = getSettings().cards === "revealed";
+  const winners = reveal === "winner" ? nightWinners(league, stats, night) : new Set();
   const seen = readStore(FLIPPED_KEY, {});
   const turned = new Set(seen.date === night.date ? seen.managers || [] : []);
   const managers = meFirst(league.managers).map(m => {
@@ -88,7 +138,7 @@ function renderNight(league, stats, night) {
     const { rows, idle, later } = nightForManager(league, stats, night, m);
     // Face down until tapped: the front only shows whose card it is
     return `
-      <div class="flip${open ? " open" : ""}${meClass(m)}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
+      <div class="flip${open ? " open" : ""}${winners.has(m) ? " win" : ""}${meClass(m)}" style="--mc:${managerColor(league, m)}" data-m="${esc(m)}" role="button" tabindex="0" aria-expanded="${open}" aria-label="Turn ${esc(m)}'s card">
        <div class="flip-inner">
         <section class="card face-down" style="--mc:${managerColor(league, m)}">
           <span class="fd-name">${esc(m)}</span>
@@ -96,8 +146,8 @@ function renderNight(league, stats, night) {
         </section>
         <section class="card face-up">
         <h3><span class="swatch" style="background:${managerColor(league, m)}"></span>${esc(m)}</h3>
-        ${rows.length ? `<ul class="lines">${rows.map(r => `
-          <li><span><b>${esc(r.name)}</b> ${r.team ? `<small>${esc(r.team)}</small>` : ""}${r.live ? ` <span class="live-badge">live</span>` : ""}
+        ${rows.length ? `<ul class="lines">${rows.map((r, i) => `
+          <li style="--i:${i}"><span><b>${esc(r.name)}</b> ${r.team ? `<small>${esc(r.team)}</small>` : ""}${r.live ? ` <span class="live-badge">live</span>` : ""}
             <small class="cats">${r.cats.join(" · ")}</small></span>
             <span class="val">${r.lines.map(esc).join("<br>")}</span></li>`).join("")}</ul>`
           : `<p class="muted">No picks played.</p>`}
@@ -133,7 +183,7 @@ function renderNight(league, stats, night) {
   document.getElementById("night").innerHTML = `
     ${status}
     ${revealAll || turned.size === league.managers.length ? "" : `<p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>`}
-    <div class="grid no-anim">${managers}</div>
+    <div class="grid no-anim reveal-${reveal}">${managers}</div>
     <div id="scores-block"><h3 class="sub">Scores</h3>
     <ul class="scores card">${games}</ul></div>`;
 }
@@ -170,12 +220,15 @@ function renderChange(el, league, from, to) {
 // Tap (or Enter/Space) turns a card; "Turn all" turns every card face up
 let ctxLeague = null;
 
-function setupFlips(nightDate) {
+function setupFlips(nightDate, reveal) {
   const night = document.getElementById("night");
   // Cards already turned show without the animation; later taps animate
   requestAnimationFrame(() => requestAnimationFrame(() => night.querySelector(".no-anim")?.classList.remove("no-anim")));
   const turn = el => {
-    el.classList.add("open");
+    if (el.classList.contains("open")) return;
+    // Only a card turned now gets the day's extras, not ones turned earlier
+    el.classList.add("open", "turned-now");
+    if (el.classList.contains("win")) setTimeout(() => celebrate(el), 550);
     el.setAttribute("aria-expanded", "true");
     const seen = readStore(FLIPPED_KEY, {});
     const list = seen.date === nightDate ? seen.managers || [] : [];
@@ -183,7 +236,13 @@ function setupFlips(nightDate) {
     if (resultsUnlocked(ctxLeague, nightDate)) unlockSpoilers();
   };
   night.addEventListener("click", e => {
-    if (e.target.id === "turn-all") { night.querySelectorAll(".flip").forEach(turn); e.target.parentElement.remove(); return; }
+    if (e.target.id === "turn-all") {
+      // On "deal" nights the cards turn one after another, like being dealt
+      const gap = reveal === "deal" && !matchMedia("(prefers-reduced-motion: reduce)").matches ? 110 : 0;
+      night.querySelectorAll(".flip:not(.open)").forEach((el, i) => gap ? setTimeout(() => turn(el), i * gap) : turn(el));
+      e.target.parentElement.remove();
+      return;
+    }
     const card = e.target.closest(".flip");
     if (card) turn(card);
   });
@@ -201,8 +260,9 @@ async function main() {
     ]);
     document.getElementById("meta").textContent = `${seasonLabel(stats.season)} regular season`;
     ctxLeague = league;
-    renderNight(league, stats, night);
-    setupFlips(night.date);
+    const reveal = revealStyle(night.date);
+    renderNight(league, stats, night, reveal);
+    setupFlips(night.date, reveal);
     // Spoiler-free: the scores and this week's changes give last night away
     spoilerGate(league, [document.getElementById("scores-block"), document.getElementById("week-title"),
       document.getElementById("week")], night.date);
