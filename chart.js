@@ -43,7 +43,7 @@ function autoRange(vals, opts) {
 // A line chart with one line per manager, drawn at the container's real width
 // so text stays readable on a phone. Hover/tap snaps to the nearest point and
 // lists every manager.
-//   xs: x labels; series: [{ name, color, values: [number|null], extra?: [string] }]
+//   xs: x labels; series: [{ name, color, values: [number|null], extra?: [string], width?, dash?, dot? (radius) }]
 //   opts: { id, aria, lim?: [min, max], step?, integer?, log?, zeroLabel?, fmt(v), tipTitle(i) }
 function drawChart(el, xs, series, opts) {
   const compact = !!opts.compact;  // small multiples: no legend or end labels
@@ -102,12 +102,15 @@ function drawChart(el, xs, series, opts) {
   const lines = series.map(s => {
     const segs = [[]];
     s.values.forEach((v, k) => { if (v == null || !isFinite(v)) segs.push([]); else segs[segs.length - 1].push(`${x(k)},${y(v)}`); });
-    return segs.filter(g => g.length).map(g => `<polyline fill="none" stroke="${s.color}" stroke-width="${s.name === me() ? 3.5 : 2}"
-        stroke-linejoin="round" stroke-linecap="round" points="${g.join(" ")}"/>`).join("") +
+    // Optional per-series look: `width` (line thickness) and `dash` (an SVG
+    // dash pattern, e.g. "6 4"), so two lines of the same color can be told apart
+    const width = s.width || (s.name === me() ? 3.5 : 2);
+    return segs.filter(g => g.length).map(g => `<polyline fill="none" stroke="${s.color}" stroke-width="${width}"
+        ${s.dash ? `stroke-dasharray="${s.dash}"` : ""} stroke-linejoin="round" stroke-linecap="round" points="${g.join(" ")}"/>`).join("") +
       s.values.map((v, k) => v == null || !isFinite(v) ? "" : v > hi || v < lo
         // Off the scale: a hollow dot on the edge (the tooltip has the real value)
-        ? `<circle cx="${x(k)}" cy="${y(v)}" r="4" fill="var(--card)" stroke="${s.color}" stroke-width="2" class="dot off"/>`
-        : `<circle cx="${x(k)}" cy="${y(v)}" r="4" fill="${s.color}" class="dot"/>`).join("");
+        ? `<circle cx="${x(k)}" cy="${y(v)}" r="${s.dot ?? 4}" fill="var(--card)" stroke="${s.color}" stroke-width="2" class="dot off"/>`
+        : `<circle cx="${x(k)}" cy="${y(v)}" r="${s.dot ?? 4}" fill="${s.color}" class="dot"/>`).join("");
   });
 
   el.innerHTML = `
