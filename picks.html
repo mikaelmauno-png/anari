@@ -22,6 +22,19 @@
     table.log td.b { font-weight: 700; }
     table.log tr.quiet td { color: var(--muted); }
     table.log small { color: var(--muted); }
+    /* Lines on the chart, one chip each; the × removes a comparison */
+    #pick-compare .chips { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+    #pick-compare .chip { display: inline-flex; align-items: center; gap: 5px; font-size: 13px;
+      border: 1px solid var(--line); border-radius: 999px; padding: 3px 4px 3px 10px; }
+    #pick-compare .chip small { font-size: 11px; }
+    #pick-compare .chip:not(:has(button)) { padding-right: 10px; }
+    #pick-compare .chip button { font: inherit; font-size: 16px; line-height: 1; color: var(--muted); background: none;
+      border: 0; border-radius: 999px; width: 24px; height: 24px; cursor: pointer; }
+    #pick-compare .chip button:hover { background: var(--accent-soft); color: var(--text); }
+    #pick-compare .compare-add { margin: 12px 0 0; align-items: flex-end; }
+    #pick-compare .compare-add select { font-size: 15px; font-weight: 500; }
+    #pick-compare .clear { font: inherit; font-size: 13px; color: var(--muted); background: none;
+      border: 1px solid var(--line); border-radius: 8px; padding: 9px 12px; cursor: pointer; }
   </style>
 </head>
 <body>
@@ -40,6 +53,7 @@
         <div id="pick-head"></div>
         <div id="pick-chart"></div>
         <p id="chart-note" class="hint"></p>
+        <div id="pick-compare"></div>
       </div>
 
       <h2>Game by game</h2>
