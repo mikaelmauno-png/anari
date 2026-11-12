@@ -18,6 +18,12 @@
       table.weeks { table-layout: fixed; }
       table.weeks th.mgr { width: 64px; }
       table.weeks thead th:last-child { width: 44px; }
+      table.days td { text-align: left; }
+      table.days .n { display: inline-block; min-width: 2.2em; text-align: right; font-weight: 700; margin-right: 8px; }
+      table.days .bar { display: inline-block; height: 8px; border-radius: 4px; vertical-align: 1px; }
+      table.days .lead .bar { background: var(--up); }
+      table.days .low .bar { background: var(--down); }
+      table.days .now { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; margin-left: 6px; }
       @media (max-width: 560px) {
         table.weeks th, table.weeks td { padding: 8px 2px; font-size: 14px; }
         table.weeks thead th { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
@@ -39,6 +45,9 @@
 
     <h2>Points above or below average</h2>
     <div id="chart" class="card"></div>
+
+    <h2>Days on top and at the bottom</h2>
+    <div id="days"></div>
 
     <h2>By week</h2>
     <div id="table"></div>

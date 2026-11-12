@@ -6,6 +6,7 @@ Writes:
   data/lastnight.json        results and stat lines from the last game night
   data/history/<date>.json   season totals through each Sunday (weekly chart)
   data/history/index.json    list of the weekly snapshot dates
+  data/history/daily.json    totals after every day, compact (days in first/last place)
   data/caphits.json          cap hits looked up on CapFreeze, ~10 players a day
   data/schedule.json         regular-season games in the next 7 days
   data/seasons/<season>/     final stats and league file, saved once the regular season ends
@@ -380,6 +381,58 @@ def write_weekly_snapshots(f):
         write_json(index_path, sorted(index))
 
 
+def write_daily(f):
+    """Season totals after every NHL date (days without games included), for
+    counting days in first and last place. Compact: each day lists only the
+    skaters and goalies whose totals changed that day, plus every team's league
+    rank. Missed days and the season start are backfilled from date-filtered stats."""
+    path = os.path.join(HISTORY, "daily.json")
+    store = read_json(path) or {}
+    if store.get("season") != f.season:
+        store = {"season": f.season, "days": []}
+    days = store["days"]
+    skaters, goalies = {}, {}  # running totals, to find what changed
+    for d in days:
+        skaters.update(d["s"])
+        goalies.update(d["g"])
+    today = date.fromisoformat(scoreboard("now")["currentDate"])  # NHL (US Eastern) date
+    day = date.fromisoformat(days[-1]["date"]) + timedelta(days=1) if days else date(int(str(f.season)[:4]), 9, 1)
+    changed = False
+    while day <= today:
+        iso = day.isoformat()
+        day += timedelta(days=1)
+        games = [g for g in scoreboard(iso)["games"] if g.get("gameType") == 2]
+        if (games and not all_final(games)) or (not games and iso == today.isoformat()):
+            break  # not over yet
+        entry = {"date": iso, "s": {}, "g": {}}
+        if games or not days:
+            rows = f.skaters(through=iso)
+            if not rows:
+                continue  # season hasn't started
+            gl = f.goalies_through(iso)
+            if gl is None:
+                print(f"daily {iso}: waiting for MoneyPuck", file=sys.stderr)
+                break
+            for s in rows:
+                v = [s["g"], s["p"], s["pim"]]
+                if skaters.get(str(s["id"]), [0, 0, 0]) != v:
+                    entry["s"][str(s["id"])] = skaters[str(s["id"])] = v
+            for g in gl:
+                if goalies.get(str(g["id"])) != g["gsax"]:
+                    entry["g"][str(g["id"])] = goalies[str(g["id"])] = g["gsax"]
+            # Raw standings: early on, teams without games lack some fields
+            entry["t"] = {t["teamAbbrev"]["default"]: [t["leagueSequence"], t.get("points", 0)]
+                          for t in json.loads(get(f"{WEB_API}/standings/{iso}"))["standings"]}
+        else:
+            entry["t"] = days[-1]["t"]  # no games: nothing moves
+        days.append(entry)
+        changed = True
+    if changed:
+        store["updated"] = now_iso()
+        write_json(path, store)
+        print(f"daily standings through {days[-1]['date']}")
+
+
 def write_schedule():
     """Unplayed regular-season games over the next 7 days, starting from the
     first game that hasn't finished yet."""
@@ -696,6 +749,10 @@ def main():
     write_current(f)
     write_last_night(f)
     write_weekly_snapshots(f)
+    try:
+        write_daily(f)
+    except Exception as e:  # only feeds the days-in-first count on Trend
+        print(f"daily standings failed: {e}", file=sys.stderr)
     write_schedule()
     archive_finished_season(league)
     try:

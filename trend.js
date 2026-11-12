@@ -77,6 +77,57 @@ function renderCategoryTrend(league, points) {
     : `Each manager's pick: ${{ G: "goals", P: "points", PIM: "penalty minutes" }[cat.unit] || cat.unit} so far this season.`;
 }
 
+// Days each manager has spent in first and in last place, from the standings
+// after every NHL date (data/history/daily.json). Ties count for everyone tied.
+function renderDays(league, days, now) {
+  const lead = Object.fromEntries(league.managers.map(m => [m, 0]));
+  const low = { ...lead };
+  for (const d of days) {
+    for (const m of d.first) lead[m]++;
+    for (const m of d.last) low[m]++;
+  }
+  const max = Math.max(1, ...Object.values(lead), ...Object.values(low));
+  const cell = (cls, n, isNow) => `<td class="${cls}"><span class="n">${n}</span><span class="bar" style="width:${Math.round(n / max * 60)}%"></span>${isNow ? `<span class="now">now</span>` : ""}</td>`;
+  const rows = league.managers.slice()
+    .sort((a, b) => lead[b] - lead[a] || low[a] - low[b])
+    .map(m => `<tr>
+      <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, m)}"></span>${esc(m)}</th>
+      ${cell("lead", lead[m], now.first.includes(m))}
+      ${cell("low", low[m], now.last.includes(m))}
+    </tr>`).join("");
+  const day = iso => fmtDay(iso, { day: "numeric", month: "short" });
+  document.getElementById("days").innerHTML = `
+    <div class="scroll"><table class="days">
+      <thead><tr><th class="mgr">Manager</th><th>Days in 1st</th><th>Days in last</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table></div>
+    <p class="hint">${days.length} days, ${day(days[0].date)} to ${day(days[days.length - 1].date)}, by the standings after each day's games
+      (days without games too). Ties count for everyone tied.</p>`;
+}
+
+// Standings after every day: the current stats with each day's totals put in.
+// The daily file lists only what changed each day, so totals carry forward.
+function dailyEnds(league, daily, now) {
+  const st = JSON.parse(JSON.stringify(now));
+  const sk = new Map(st.skaters.map(s => [String(s.id), s]));
+  const gk = new Map(st.goalies.map(g => [String(g.id), g]));
+  const tm = new Map(st.teams.map(t => [t.abbrev, t]));
+  for (const s of st.skaters) s.g = s.p = s.pim = 0;
+  for (const g of st.goalies) g.gsax = 0;
+  return daily.days.map(d => {
+    for (const [id, [g, p, pim]] of Object.entries(d.s)) { const s = sk.get(id); if (s) Object.assign(s, { g, p, pim }); }
+    for (const [id, gsax] of Object.entries(d.g)) { const g = gk.get(id); if (g) g.gsax = gsax; }
+    for (const [ab, [rank, pts]] of Object.entries(d.t)) { const t = tm.get(ab); if (t) Object.assign(t, { rank, pts }); }
+    return { date: d.date, ...ends(computeStandings(league, st).table) };
+  });
+}
+
+// Who is first (wins break a tie on total, as in the standings) and who is last
+function ends(table) {
+  const min = Math.min(...table.map(r => r.total));
+  return { first: table.filter(r => r.place === 1).map(r => r.manager), last: table.filter(r => r.total === min).map(r => r.manager) };
+}
+
 function renderTable(league, weeks) {
   const head = league.managers.map(m =>
     `<th><span class="swatch" style="background:${managerColor(league, m)}"></span>${esc(m)}</th>`).join("");
@@ -121,6 +172,12 @@ async function main() {
       return { date: p.date, byCat: Object.fromEntries(results.map(r => [r.cat.key, r.entries])) };
     });
     renderCategoryTrend(league, points);
+    try {
+      const daily = await loadJSON("data/history/daily.json");
+      if (daily.days.length) renderDays(league, dailyEnds(league, daily, now), ends(computeStandings(league, now).table));
+    } catch {
+      document.getElementById("days").innerHTML = `<p class="muted">No daily standings yet.</p>`;
+    }
     document.getElementById("cat-controls").addEventListener("change", e => {
       if (e.target.id !== "cat-select") return;
       writeStore(CAT_VIEW_KEY, { ...readStore(CAT_VIEW_KEY, {}), cat: e.target.value });
