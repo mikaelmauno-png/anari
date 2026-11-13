@@ -27,6 +27,44 @@
 /* Sunset gradient down the whole page: on <html> so it covers every scroll position */
 :root[data-theme="vaporwave"] { min-height: 100%; background: linear-gradient(180deg, #1a0b2e 0%, #2b0d48 60%, #3a0f4f 100%); }
 :root[data-theme="vaporwave"] body { background: transparent; }
+
+/* Newspaper: cream paper, ink text, serif type like an old sports page.
+   Managers in muted inks: navy, rust, green, plum */
+:root[data-theme="newspaper"] {
+  color-scheme: light;
+  --bg: #f1ece0; --card: #faf7ef; --text: #1c1a17; --muted: #6b645a; --line: #d9d1c0;
+  --accent: #8b1e1e; --accent-soft: #efe3d6; --warn: #9a5b13; --gold: #9a7b1c;
+  --s1: #1f4e79; --s2: #b4532a; --s3: #3f6b3a; --s4: #7b4b94;
+  --up: #2f6b2f; --down: #9b2c2c;
+}
+:root[data-theme="newspaper"] body { font-family: Georgia, "Times New Roman", serif; }
+:root[data-theme="newspaper"] header h1 { font-size: 34px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
+/* Nearly square corners, like newsprint columns */
+:root[data-theme="newspaper"] :is(.card, .scroll, nav.tabs, .banner) { border-radius: 2px; }
+
+/* Northern lights: night-blue sky with a green and violet glow at the top */
+:root[data-theme="aurora"] {
+  color-scheme: dark;
+  --bg: #0a1424; --card: #101e33; --text: #e6f1ff; --muted: #8aa2c0; --line: #1d3150;
+  --accent: #4ff0b4; --accent-soft: #0f3340; --warn: #f5d76e; --gold: #f5d76e;
+  --s1: #5cc8ff; --s2: #ff8fab; --s3: #a3e635; --s4: #c08bff;
+  --up: #4ff0b4; --down: #ff7a90;
+  /* Two soft glows layered over the night color; on <html> so it covers the whole page */
+  min-height: 100%;
+  background: radial-gradient(120% 50% at 30% 0%, #0f4a45 0%, transparent 60%),
+              radial-gradient(90% 40% at 85% 5%, #3b2366 0%, transparent 60%), #0a1424;
+}
+:root[data-theme="aurora"] body { background: transparent; }
+
+/* High contrast: black and white with a yellow accent, easiest to read in sunlight */
+:root[data-theme="contrast"] {
+  color-scheme: dark;
+  --bg: #000; --card: #000; --text: #fff; --muted: #e0e0e0; --line: #fff;
+  --accent: #ffff00; --accent-soft: #333300; --warn: #ffd700; --gold: #ffd700;
+  --s1: #00bfff; --s2: #ff8c00; --s3: #00ff7f; --s4: #ff69b4;
+  --up: #00ff7f; --down: #ff6060;
+}
+:root[data-theme="contrast"] body { font-weight: 500; }
 :root[data-theme="vaporwave"] header h1 {
   background: linear-gradient(90deg, #ff71ce, #b967ff, #01cdfe);
   -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content;

@@ -1,5 +1,5 @@
 // Color theme: loaded in every page's <head>, before anything is drawn, so the
-// page never flashes in the wrong colors. Sets <html data-theme="light|dark|vaporwave">;
+// page never flashes in the wrong colors. Sets <html data-theme="light|dark|vaporwave|...">;
 // style.css picks the palette from that attribute.
 //
 // The choice lives in the same per-device settings as the rest of Settings
@@ -7,7 +7,8 @@
 // at this point, so the setting is read here directly.
 
 // Status bar / browser toolbar color for each theme (matches --bg in style.css)
-const THEME_BARS = { light: "#f4f5f7", dark: "#0b1120", vaporwave: "#1a0b2e" };
+const THEME_BARS = { light: "#f4f5f7", dark: "#0b1120", vaporwave: "#1a0b2e",
+  newspaper: "#f1ece0", aurora: "#0a1424", contrast: "#000000" };
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 function savedTheme() {

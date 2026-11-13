@@ -40,6 +40,9 @@ function render() {
     ["light", "Light", ""],
     ["dark", "Dark", ""],
     ["vaporwave", "Vaporwave", "Neon pink and cyan on deep purple."],
+    ["newspaper", "Newspaper", "Ink on cream paper, like an old sports page."],
+    ["aurora", "Northern lights", "Night-blue sky with a green and violet glow."],
+    ["contrast", "High contrast", "Black, white and yellow. Easiest to read in bright sunlight."],
   ].map(([value, title, hint]) => `
     <label class="option">
       <input type="radio" name="theme" value="${value}" ${s.theme === value ? "checked" : ""}>
