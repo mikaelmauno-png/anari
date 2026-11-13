@@ -208,7 +208,7 @@ function renderChange(el, league, from, to) {
         <td class="total">${r.total}</td>
         <td class="${delta > 0 ? "up" : delta < 0 ? "down" : "muted"}">${b ? (delta > 0 ? "+" : delta < 0 ? "−" : "±") + Math.abs(delta) : ""}</td>
       </tr>
-      ${b ? `<tr class="moves${meClass(r.manager)}"><td></td><td colspan="4">${moves || `<span class="muted">no change</span>`}</td></tr>` : ""}`;
+      ${b ? `<tr class="moves${meClass(r.manager)}"${mcStyle(league, r.manager)}><td></td><td colspan="4">${moves || `<span class="muted">no change</span>`}</td></tr>` : ""}`;
   }).join("");
   el.innerHTML = `
     <div class="scroll"><table>
