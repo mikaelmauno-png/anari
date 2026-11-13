@@ -1,10 +1,14 @@
+/* Light theme (the default): ice-rink look, pale ice-blue background
+   and goal-line red accent */
 :root {
-  --bg: #f4f5f7; --card: #fff; --text: #111827; --muted: #6b7280; --line: #e5e7eb;
-  --accent: #2563eb; --accent-soft: #eff6ff; --warn: #b45309; --gold: #ca8a04;
-  /* manager series colors: validated categorical slots 1-4 (blue, orange, aqua, yellow) */
-  --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
+  --bg: #eaf2f8; --card: #fff; --text: #0b1d33; --muted: #5b6b7d; --line: #d3dfe8;
+  --accent: #c8102e; --accent-soft: #fde8eb; --warn: #b45309; --gold: #b8860b;
+  /* manager series colors: blue, orange, teal, violet */
+  --s1: #1d4ed8; --s2: #ea580c; --s3: #0d9488; --s4: #7c3aed;
   --up: #15803d; --down: #b91c1c;
 }
+/* Red line under the title, like the goal line */
+:root[data-theme="light"] header h1 { border-bottom: 4px solid var(--accent); width: fit-content; padding-right: 8px; }
 /* Color themes. theme.js sets <html data-theme="..."> from Settings
    ("auto" resolves to light or dark from the device setting).
    color-scheme makes scrollbars and form controls match. */
