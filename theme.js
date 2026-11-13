@@ -8,7 +8,7 @@
 
 // Status bar / browser toolbar color for each theme (matches --bg in style.css)
 const THEME_BARS = { light: "#eaf2f8", dark: "#0b1120", vaporwave: "#0b0814",
-  newspaper: "#f1ece0", aurora: "#0a1424", contrast: "#000000" };
+  newspaper: "#f1ece0", aurora: "#060b12", contrast: "#000000" };
 const darkQuery = window.matchMedia("(prefers-color-scheme: dark)");
 
 function savedTheme() {

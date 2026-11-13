@@ -22,52 +22,120 @@
 }
 /* Vaporwave: near-black night with neon used sparingly. Four neons share the work
    (cyan, amber, magenta, periwinkle) instead of everything being pink; the
-   orange -> pink -> violet "sunset" gradient marks the title, tabs and section breaks. */
+   orange -> pink -> violet "sunset" gradient marks the title, tabs and section breaks.
+   Layout rules shared with Northern lights are under "Neon themes" below. */
 :root[data-theme="vaporwave"] {
   color-scheme: dark;
   --bg: #0b0814; --card: #110c1d; --text: #ece8f6; --muted: #9a8fc0; --line: #221a33;
   --accent: #a46bff; --accent-soft: #1c1430; --warn: #ffb347; --gold: #ffc857;
   --s1: #2ee6e6; --s2: #ff9f43; --s3: #ff3d7f; --s4: #8088ff;
   --up: #3df5c8; --down: #ff3d7f;
-  --sunset: linear-gradient(90deg, #ff9f43, #ff3d7f 50%, #a46bff);
+  --signature: linear-gradient(90deg, #ff9f43, #ff3d7f 50%, #a46bff);
+  --glow: 0 0 10px; --glow-mix: 55%;   /* tight, strong neon glow */
   /* Faint violet haze at the top of the page; on <html> so it covers every scroll position */
   min-height: 100%;
   background: radial-gradient(120% 40% at 50% 0%, #2a1340 0%, transparent 70%), #0b0814;
 }
-:root[data-theme="vaporwave"] body { background: transparent; }
-/* Title in the sunset gradient */
-:root[data-theme="vaporwave"] header h1 {
-  background: var(--sunset); -webkit-background-clip: text; background-clip: text; color: transparent;
-  width: fit-content; font-weight: 800; letter-spacing: 0.01em;
+/* Heavy title: the hot, loud one of the two neon themes */
+:root[data-theme="vaporwave"] header h1 { font-weight: 800; letter-spacing: 0.01em; }
+:root[data-theme="vaporwave"] tbody tr:first-child .place { text-shadow: 0 0 8px rgb(255 200 87 / 0.6); }
+/* Chart lines glow softly */
+:root[data-theme="vaporwave"] .plot polyline { filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.18)); }
+
+/* Northern lights: a near-black northern sky with faint stars and an aurora
+   that drifts slowly at the top. Cold and airy where Vaporwave is hot and heavy:
+   thin spaced-out title, softer wider glow, ice-white accent that no manager uses.
+   Gradient: aurora green -> ice blue -> violet. */
+:root[data-theme="aurora"] {
+  color-scheme: dark;
+  --bg: #060b12; --card: #0b1420; --text: #e6f1ff; --muted: #8299b5; --line: #172536;
+  --accent: #d8f3ff; --accent-soft: #132131; --warn: #f5d76e; --gold: #f5d76e;
+  --s1: #5cc8ff; --s2: #ff8fab; --s3: #a3e635; --s4: #c08bff;
+  --up: #4ff0b4; --down: #ff7a90;
+  --signature: linear-gradient(90deg, #4ff0b4, #5cc8ff 50%, #c08bff);
+  --glow: 0 0 16px; --glow-mix: 40%;   /* softer, wider glow than Vaporwave */
+  min-height: 100%;
+  /* Stars: a few tiny dots in a 260px tile repeated over the sky */
+  background:
+    radial-gradient(1px 1px at 12% 18%, rgb(255 255 255 / 0.7), transparent),
+    radial-gradient(1px 1px at 47% 62%, rgb(255 255 255 / 0.5), transparent),
+    radial-gradient(1.5px 1.5px at 78% 30%, rgb(255 255 255 / 0.6), transparent),
+    radial-gradient(1px 1px at 33% 85%, rgb(255 255 255 / 0.4), transparent),
+    radial-gradient(1px 1px at 88% 78%, rgb(255 255 255 / 0.5), transparent),
+    #060b12;
+  background-size: 260px 260px;
+}
+/* Thin, widely spaced capitals: Ä N Ä R I */
+:root[data-theme="aurora"] header h1 { font-weight: 300; text-transform: uppercase; letter-spacing: 0.35em; }
+/* The aurora: two soft curtains of light fixed to the top of the screen, behind
+   everything (z-index -1), drifting in opposite directions at different speeds so
+   the motion never visibly repeats. Only transform and opacity animate, which
+   phones can do cheaply. */
+:root[data-theme="aurora"] body::before,
+:root[data-theme="aurora"] body::after {
+  content: ""; position: fixed; left: -20%; right: -20%; top: -10vh; height: 70vh;
+  z-index: -1; pointer-events: none;
+  /* Fade the bottom edge out so the light dissolves into the night */
+  -webkit-mask-image: linear-gradient(180deg, #000 30%, transparent);
+  mask-image: linear-gradient(180deg, #000 30%, transparent);
+}
+:root[data-theme="aurora"] body::before {
+  background:
+    radial-gradient(40% 55% at 30% 35%, rgb(79 240 180 / 0.32), transparent 70%),
+    radial-gradient(30% 45% at 55% 25%, rgb(92 200 255 / 0.22), transparent 70%);
+  animation: aurora-drift 26s ease-in-out infinite alternate;
+}
+:root[data-theme="aurora"] body::after {
+  background:
+    radial-gradient(35% 50% at 75% 30%, rgb(192 139 255 / 0.28), transparent 70%),
+    radial-gradient(25% 40% at 45% 45%, rgb(79 240 180 / 0.16), transparent 70%);
+  animation: aurora-drift 38s ease-in-out infinite alternate-reverse;
+}
+@keyframes aurora-drift {
+  0%   { transform: translateX(-6%) scaleY(0.9);  opacity: 0.7; }
+  50%  { transform: translateX(2%)  scaleY(1.15); opacity: 1; }
+  100% { transform: translateX(7%)  scaleY(1);    opacity: 0.8; }
+}
+/* Devices set to reduce motion get a still aurora */
+@media (prefers-reduced-motion: reduce) {
+  :root[data-theme="aurora"] body::before, :root[data-theme="aurora"] body::after { animation: none; }
+}
+
+/* ---------- Neon themes (Vaporwave, Northern lights): shared layout ----------
+   Each theme sets --signature (its gradient) and --glow / --glow-mix (glow size
+   and strength); these rules do the rest, so a fix here fixes both themes. */
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) body { background: transparent; }
+/* Title in the theme's gradient */
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) header h1 {
+  background: var(--signature); -webkit-background-clip: text; background-clip: text; color: transparent;
+  width: fit-content;
 }
 /* Tabs: plain text on a thin gradient rule, the current one underlined in the gradient */
-:root[data-theme="vaporwave"] nav.tabs {
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) nav.tabs {
   background: none; border: 0; border-radius: 0; padding: 0; width: 100%;
-  border-bottom: 1px solid; border-image: linear-gradient(90deg, #ff9f43, #ff3d7f, #8088ff) 1;
+  border-bottom: 1px solid; border-image: var(--signature) 1;
 }
-:root[data-theme="vaporwave"] nav.tabs a { border-radius: 0; padding-bottom: 9px; }
-:root[data-theme="vaporwave"] nav.tabs a[aria-current="page"] {
-  color: var(--text); background: var(--sunset) bottom / 100% 3px no-repeat;
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) nav.tabs a { border-radius: 0; padding-bottom: 9px; }
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) nav.tabs a[aria-current="page"] {
+  color: var(--text); background: var(--signature) bottom / 100% 3px no-repeat;
 }
 /* Section headings sit under a gradient divider, in plain sentence case */
-:root[data-theme="vaporwave"] h2 {
-  padding-top: 22px; margin-top: 30px; border-top: 1px solid;
-  border-image: linear-gradient(90deg, #ff9f43, #ff3d7f, #8088ff) 1;
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) h2 {
+  padding-top: 22px; margin-top: 30px; border-top: 1px solid; border-image: var(--signature) 1;
   color: var(--text); font-size: 18px; font-weight: 600; text-transform: none; letter-spacing: 0;
 }
 /* Each manager's totals and category points glow in their own color
-   (--mc is set on the row by mcStyle() in score.js; violet accent if missing) */
-:root[data-theme="vaporwave"] :is(.total, li.scored .pts) {
+   (--mc is set on the row by mcStyle() in score.js; the accent if missing) */
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) :is(.total, li.scored .pts) {
   color: var(--mc, var(--accent));
-  text-shadow: 0 0 10px color-mix(in srgb, var(--mc, var(--accent)) 55%, transparent);
+  text-shadow: var(--glow) color-mix(in srgb, var(--mc, var(--accent)) var(--glow-mix), transparent);
 }
 /* Your own row: a faint wash of your color instead of the shared accent */
-:root[data-theme="vaporwave"] :is(tr.me > *, ol.rank li.me) { background: color-mix(in srgb, var(--mc, var(--accent)) 12%, var(--card)); }
-:root[data-theme="vaporwave"] tbody tr:first-child .place { text-shadow: 0 0 8px rgb(255 200 87 / 0.6); }
-/* Chart lines glow softly in their own color */
-:root[data-theme="vaporwave"] .plot polyline { filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.18)); }
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) :is(tr.me > *, ol.rank li.me) {
+  background: color-mix(in srgb, var(--mc, var(--accent)) 12%, var(--card));
+}
 /* Panels: barely lifted off the background, rounder corners */
-:root[data-theme="vaporwave"] :is(.card, .scroll) { border-radius: 14px; }
+:root:is([data-theme="vaporwave"], [data-theme="aurora"]) :is(.card, .scroll) { border-radius: 14px; }
 
 /* Newspaper: cream paper, ink text, serif type like an old sports page.
    Managers in muted inks: navy, rust, green, plum */
@@ -82,20 +150,6 @@
 :root[data-theme="newspaper"] header h1 { font-size: 34px; font-weight: 900; text-transform: uppercase; letter-spacing: 0.04em; }
 /* Nearly square corners, like newsprint columns */
 :root[data-theme="newspaper"] :is(.card, .scroll, nav.tabs, .banner) { border-radius: 2px; }
-
-/* Northern lights: night-blue sky with a green and violet glow at the top */
-:root[data-theme="aurora"] {
-  color-scheme: dark;
-  --bg: #0a1424; --card: #101e33; --text: #e6f1ff; --muted: #8aa2c0; --line: #1d3150;
-  --accent: #4ff0b4; --accent-soft: #0f3340; --warn: #f5d76e; --gold: #f5d76e;
-  --s1: #5cc8ff; --s2: #ff8fab; --s3: #a3e635; --s4: #c08bff;
-  --up: #4ff0b4; --down: #ff7a90;
-  /* Two soft glows layered over the night color; on <html> so it covers the whole page */
-  min-height: 100%;
-  background: radial-gradient(120% 50% at 30% 0%, #0f4a45 0%, transparent 60%),
-              radial-gradient(90% 40% at 85% 5%, #3b2366 0%, transparent 60%), #0a1424;
-}
-:root[data-theme="aurora"] body { background: transparent; }
 
 /* High contrast: black and white with a yellow accent, easiest to read in sunlight */
 :root[data-theme="contrast"] {

@@ -41,7 +41,7 @@ function render() {
     ["dark", "Dark", ""],
     ["vaporwave", "Vaporwave", "Neon cyan, amber and magenta on a near-black night."],
     ["newspaper", "Newspaper", "Ink on cream paper, like an old sports page."],
-    ["aurora", "Northern lights", "Night-blue sky with a green and violet glow."],
+    ["aurora", "Northern lights", "Night sky with stars and a slowly drifting aurora."],
     ["contrast", "High contrast", "Black, white and yellow. Easiest to read in bright sunlight."],
   ].map(([value, title, hint]) => `
     <label class="option">
