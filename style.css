@@ -5,13 +5,31 @@
   --s1: #2a78d6; --s2: #eb6834; --s3: #1baf7a; --s4: #eda100;
   --up: #15803d; --down: #b91c1c;
 }
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0b1120; --card: #111827; --text: #e5e7eb; --muted: #9ca3af; --line: #1f2937;
-    --accent: #60a5fa; --accent-soft: #172554; --warn: #fbbf24; --gold: #facc15;
-    --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
-    --up: #4ade80; --down: #f87171;
-  }
+/* Color themes. theme.js sets <html data-theme="..."> from Settings
+   ("auto" resolves to light or dark from the device setting).
+   color-scheme makes scrollbars and form controls match. */
+:root { color-scheme: light; }
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0b1120; --card: #111827; --text: #e5e7eb; --muted: #9ca3af; --line: #1f2937;
+  --accent: #60a5fa; --accent-soft: #172554; --warn: #fbbf24; --gold: #facc15;
+  --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
+  --up: #4ade80; --down: #f87171;
+}
+/* Vaporwave: deep purple night, neon pink accent, cyan / sunset / mint / yellow managers */
+:root[data-theme="vaporwave"] {
+  color-scheme: dark;
+  --bg: #1a0b2e; --card: #26103f; --text: #fbe7ff; --muted: #b79bd8; --line: #42235f;
+  --accent: #ff71ce; --accent-soft: #3f1650; --warn: #fffb96; --gold: #fffb96;
+  --s1: #01cdfe; --s2: #ff9a5c; --s3: #05ffa1; --s4: #b967ff;
+  --up: #05ffa1; --down: #ff6b81;
+}
+/* Sunset gradient down the whole page: on <html> so it covers every scroll position */
+:root[data-theme="vaporwave"] { min-height: 100%; background: linear-gradient(180deg, #1a0b2e 0%, #2b0d48 60%, #3a0f4f 100%); }
+:root[data-theme="vaporwave"] body { background: transparent; }
+:root[data-theme="vaporwave"] header h1 {
+  background: linear-gradient(90deg, #ff71ce, #b967ff, #01cdfe);
+  -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content;
 }
 * { box-sizing: border-box; }
 body {

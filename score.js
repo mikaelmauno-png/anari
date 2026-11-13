@@ -465,6 +465,7 @@ const SETTING_DEFAULTS = {
   cards: "hidden",     // last game night cards: "hidden" | "revealed"
   me: "",              // which manager this device belongs to ("" = just watching)
   spoilerFree: false,  // cover last night's results until your card is turned
+  theme: "auto",       // color theme: "auto" (follow device) | "light" | "dark" | "vaporwave" (applied by theme.js)
 };
 function getSettings() {
   try { return { ...SETTING_DEFAULTS, ...JSON.parse(localStorage.getItem(SETTINGS_KEY) || "{}") }; }

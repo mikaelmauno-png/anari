@@ -12,6 +12,7 @@
   <meta name="apple-mobile-web-app-title" content="Änäri">
   <script>document.write(`<link rel="stylesheet" href="style.css?v=${Date.now()}">`)</script>
   <noscript><link rel="stylesheet" href="style.css"></noscript>
+  <script>document.write(`<script src="theme.js?v=${Date.now()}"><\/script>`)</script>
   <style>
     .option { display: flex; gap: 12px; align-items: flex-start; padding: 10px 0; border-top: 1px solid var(--line); cursor: pointer; }
     .option:first-child { border-top: 0; }
@@ -42,6 +43,9 @@
 
     <h2>Spoiler-free mode</h2>
     <div class="card"><div id="spoilers"></div></div>
+
+    <h2>Theme</h2>
+    <div class="card"><div id="theme"></div></div>
   </main>
   <script>
     // Version tag on every load so an update is never served from a stale cache

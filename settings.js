@@ -34,12 +34,25 @@ function render() {
           ? "Needs the cards to start hidden (above)."
           : `Covers the standings, category cards, weekly changes, scores and playoff picture until you turn ${s.me ? `${esc(s.me)}'s card` : "every card"} on Last round, or tap “Show anyway”.`}</small></span>
     </label>`;
+
+  document.getElementById("theme").innerHTML = [
+    ["auto", "Automatic", "Light or dark, following this device's setting."],
+    ["light", "Light", ""],
+    ["dark", "Dark", ""],
+    ["vaporwave", "Vaporwave", "Neon pink and cyan on deep purple."],
+  ].map(([value, title, hint]) => `
+    <label class="option">
+      <input type="radio" name="theme" value="${value}" ${s.theme === value ? "checked" : ""}>
+      <span><b>${title}</b>${hint ? `<small>${hint}</small>` : ""}</span>
+    </label>`).join("");
 }
 
 document.addEventListener("change", e => {
   if (e.target.name === "me") setSetting("me", e.target.value);
   else if (e.target.name === "cards") setSetting("cards", e.target.value);
   else if (e.target.name === "spoilerFree") setSetting("spoilerFree", e.target.checked);
+  // applyTheme() comes from theme.js: switch colors right away, no reload needed
+  else if (e.target.name === "theme") { setSetting("theme", e.target.value); applyTheme(e.target.value); }
   else return;
   flash(); render();
 });
