@@ -20,17 +20,48 @@
   --s1: #3987e5; --s2: #d95926; --s3: #199e70; --s4: #c98500;
   --up: #4ade80; --down: #f87171;
 }
-/* Vaporwave: deep purple night, neon pink accent, cyan / sunset / mint / yellow managers */
+/* Vaporwave: near-black night with neon used sparingly. Four neons share the work
+   (cyan, amber, magenta, periwinkle) instead of everything being pink; the
+   orange -> pink -> violet "sunset" gradient marks the title, tabs and section breaks. */
 :root[data-theme="vaporwave"] {
   color-scheme: dark;
-  --bg: #1a0b2e; --card: #26103f; --text: #fbe7ff; --muted: #b79bd8; --line: #42235f;
-  --accent: #ff71ce; --accent-soft: #3f1650; --warn: #fffb96; --gold: #fffb96;
-  --s1: #01cdfe; --s2: #ff9a5c; --s3: #05ffa1; --s4: #b967ff;
-  --up: #05ffa1; --down: #ff6b81;
+  --bg: #0b0814; --card: #110c1d; --text: #ece8f6; --muted: #9a8fc0; --line: #221a33;
+  --accent: #2ee6e6; --accent-soft: #10222a; --warn: #ffb347; --gold: #ffc857;
+  --s1: #2ee6e6; --s2: #ff9f43; --s3: #ff3d7f; --s4: #8088ff;
+  --up: #3df5c8; --down: #ff3d7f;
+  --sunset: linear-gradient(90deg, #ff9f43, #ff3d7f 50%, #a46bff);
+  /* Faint violet haze at the top of the page; on <html> so it covers every scroll position */
+  min-height: 100%;
+  background: radial-gradient(120% 40% at 50% 0%, #2a1340 0%, transparent 70%), #0b0814;
 }
-/* Sunset gradient down the whole page: on <html> so it covers every scroll position */
-:root[data-theme="vaporwave"] { min-height: 100%; background: linear-gradient(180deg, #1a0b2e 0%, #2b0d48 60%, #3a0f4f 100%); }
 :root[data-theme="vaporwave"] body { background: transparent; }
+/* Title in the sunset gradient */
+:root[data-theme="vaporwave"] header h1 {
+  background: var(--sunset); -webkit-background-clip: text; background-clip: text; color: transparent;
+  width: fit-content; font-weight: 800; letter-spacing: 0.01em;
+}
+/* Tabs: plain text on a thin gradient rule, the current one underlined in the gradient */
+:root[data-theme="vaporwave"] nav.tabs {
+  background: none; border: 0; border-radius: 0; padding: 0; width: 100%;
+  border-bottom: 1px solid; border-image: linear-gradient(90deg, #ff9f43, #ff3d7f, #8088ff) 1;
+}
+:root[data-theme="vaporwave"] nav.tabs a { border-radius: 0; padding-bottom: 9px; }
+:root[data-theme="vaporwave"] nav.tabs a[aria-current="page"] {
+  color: var(--text); background: var(--sunset) bottom / 100% 3px no-repeat;
+}
+/* Section headings sit under a gradient divider, in plain sentence case */
+:root[data-theme="vaporwave"] h2 {
+  padding-top: 22px; margin-top: 30px; border-top: 1px solid;
+  border-image: linear-gradient(90deg, #ff9f43, #ff3d7f, #8088ff) 1;
+  color: var(--text); font-size: 18px; font-weight: 600; text-transform: none; letter-spacing: 0;
+}
+/* Neon glow on the numbers that matter */
+:root[data-theme="vaporwave"] :is(.total, li.scored .pts) { text-shadow: 0 0 10px rgb(46 230 230 / 0.55); }
+:root[data-theme="vaporwave"] tbody tr:first-child .place { text-shadow: 0 0 8px rgb(255 200 87 / 0.6); }
+/* Chart lines glow softly in their own color */
+:root[data-theme="vaporwave"] .plot polyline { filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.18)); }
+/* Panels: barely lifted off the background, rounder corners */
+:root[data-theme="vaporwave"] :is(.card, .scroll) { border-radius: 14px; }
 
 /* Newspaper: cream paper, ink text, serif type like an old sports page.
    Managers in muted inks: navy, rust, green, plum */
@@ -69,10 +100,6 @@
   --up: #00ff7f; --down: #ff6060;
 }
 :root[data-theme="contrast"] body { font-weight: 500; }
-:root[data-theme="vaporwave"] header h1 {
-  background: linear-gradient(90deg, #ff71ce, #b967ff, #01cdfe);
-  -webkit-background-clip: text; background-clip: text; color: transparent; width: fit-content;
-}
 * { box-sizing: border-box; }
 body {
   margin: 0; background: var(--bg); color: var(--text);

@@ -39,7 +39,7 @@ function render() {
     ["auto", "Automatic", "Light or dark, following this device's setting."],
     ["light", "Light", ""],
     ["dark", "Dark", ""],
-    ["vaporwave", "Vaporwave", "Neon pink and cyan on deep purple."],
+    ["vaporwave", "Vaporwave", "Neon cyan, amber and magenta on a near-black night."],
     ["newspaper", "Newspaper", "Ink on cream paper, like an old sports page."],
     ["aurora", "Northern lights", "Night-blue sky with a green and violet glow."],
     ["contrast", "High contrast", "Black, white and yellow. Easiest to read in bright sunlight."],
