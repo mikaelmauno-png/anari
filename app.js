@@ -23,7 +23,7 @@ function render(league, stats) {
     <div class="scroll"><table class="standings fixed${over ? " tight" : ""}">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th class="tot">Total</th>${over ? `<th class="po" title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
       <tbody>${rows.map(r => `
-        <tr class="${meClass(r.manager)}"${mcStyle(league, r.manager)}>
+        <tr class="${meClass(r.manager)}${r.place === 1 ? " lead" : ""}"${mcStyle(league, r.manager)}>
           <td class="place">${r.place}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.total}</td>

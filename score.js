@@ -402,12 +402,77 @@ function bannerHTML(league, season, rows, note = "") {
     </div>`;
 }
 
-// Confetti bursting from the banner's trophy, in the managers' colors and gold.
+// Celebration bursting from the banner's trophy (or a winning card), in the
+// theme's own style: paper confetti in Newspaper, neon sparks in Vaporwave,
+// a full-screen aurora in Northern lights, colored confetti everywhere else.
 // Skipped when the device asks for reduced motion.
 function celebrate(from) {
   if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+  const theme = document.documentElement.dataset.theme;
+  if (theme === "aurora") return auroraBurst();
   const css = getComputedStyle(document.documentElement);
-  const colors = ["--s1", "--s2", "--s3", "--s4", "--gold"].map(v => css.getPropertyValue(v).trim());
+  const series = ["--s1", "--s2", "--s3", "--s4"].map(v => css.getPropertyValue(v).trim());
+  const gold = css.getPropertyValue("--gold").trim();
+  burst(from, theme === "vaporwave" ? SPARKS([...series, "#ffffff"])
+    : theme === "newspaper" ? PAPER : CONFETTI([...series, gold]));
+}
+
+// Northern lights: a CSS-animated aurora over the whole screen (.aurora-burst in style.css)
+function auroraBurst() {
+  const el = document.createElement("div");
+  el.className = "aurora-burst";
+  el.setAttribute("aria-hidden", "true");
+  document.body.append(el);
+  el.addEventListener("animationend", () => el.remove());
+}
+
+// Particle styles for burst(). Each says how many bits, how they fly
+// (speed, gravity, drag), how long the show lasts and how one bit is drawn.
+const CONFETTI = colors => ({
+  count: 180, speed: [6, 17], gravity: 0.3, drag: 0.985, length: 4200, colors,
+  draw(ctx, b) {
+    ctx.rotate(b.rot);
+    ctx.scale(1, Math.cos(b.rot * 2));  // tumbling
+    ctx.fillStyle = b.color;
+    ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+  },
+});
+// Newsprint scraps: bigger, slower, fluttering side to side as they fall
+const PAPER = {
+  count: 110, speed: [5, 12], gravity: 0.16, drag: 0.965, length: 5200, flutter: 0.25,
+  colors: ["#f6f1e4", "#ece4d2", "#ddd3bc", "#f6f1e4", "#8b1e1e"],
+  draw(ctx, b) {
+    ctx.rotate(b.rot);
+    ctx.scale(1, Math.cos(b.rot * 1.5));
+    const w = b.w * 1.6, h = b.h * 1.4;
+    ctx.fillStyle = b.color;
+    ctx.fillRect(-w / 2, -h / 2, w, h);
+    // A few grey lines of "print" on the light scraps
+    if (b.color !== "#8b1e1e") {
+      ctx.fillStyle = "rgb(28 26 23 / 0.35)";
+      for (let y = -h / 2 + 3; y < h / 2 - 2; y += 3) ctx.fillRect(-w / 2 + 2, y, w - 4, 0.8);
+    }
+  },
+};
+// Neon sparks: short glowing streaks drawn along their direction of travel,
+// added together ("lighter") so overlapping sparks get brighter
+const SPARKS = colors => ({
+  count: 150, speed: [8, 18], gravity: 0.12, drag: 0.955, length: 2600, colors, composite: "lighter",
+  draw(ctx, b) {
+    ctx.strokeStyle = b.color;
+    ctx.lineCap = "round";
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(-b.vx * 2.2, -b.vy * 2.2);  // tail points back where it came from
+    // Glow: a wide faint stroke under a thin bright one (cheaper than canvas blur on phones)
+    ctx.globalAlpha *= 0.3; ctx.lineWidth = 7; ctx.stroke();
+    ctx.globalAlpha /= 0.3; ctx.lineWidth = 2; ctx.stroke();
+  },
+});
+
+// Shared particle engine: bits fly out of `from` (or the upper middle of the
+// screen) on a full-screen canvas that removes itself when the show is over.
+function burst(from, style) {
   const canvas = document.createElement("canvas");
   canvas.className = "confetti";
   canvas.setAttribute("aria-hidden", "true");
@@ -419,26 +484,26 @@ function celebrate(from) {
   ctx.scale(dpr, dpr);
   const box = from ? from.getBoundingClientRect() : { left: w / 2, top: h / 3, width: 0, height: 0 };
   const x0 = box.left + box.width / 2, y0 = box.top + box.height / 2;
-  const bits = Array.from({ length: 180 }, (_, i) => {
-    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, speed = 6 + Math.random() * 11;
+  const [lo, hi] = style.speed;
+  const bits = Array.from({ length: style.count }, (_, i) => {
+    const angle = -Math.PI / 2 + (Math.random() - 0.5) * 2.2, speed = lo + Math.random() * (hi - lo);
     return { x: x0, y: y0, vx: Math.cos(angle) * speed + (Math.random() - 0.5) * 3, vy: Math.sin(angle) * speed,
       w: 5 + Math.random() * 5, h: 8 + Math.random() * 6, rot: Math.random() * 6, spin: (Math.random() - 0.5) * 0.35,
-      color: colors[i % colors.length] };
+      phase: Math.random() * 6, color: style.colors[i % style.colors.length] };
   });
-  const start = performance.now(), length = 4200;
+  const start = performance.now(), length = style.length;
   const frame = now => {
     const age = now - start;
     ctx.clearRect(0, 0, w, h);
-    ctx.globalAlpha = Math.min(1, (length - age) / 1000);
+    ctx.globalCompositeOperation = style.composite || "source-over";
+    ctx.globalAlpha = Math.max(0, Math.min(1, (length - age) / 1000));  // fade out over the last second
     for (const b of bits) {
-      b.vy += 0.3; b.vx *= 0.985; b.vy *= 0.985;
+      b.vy += style.gravity; b.vx *= style.drag; b.vy *= style.drag;
+      if (style.flutter) b.vx += Math.sin(age / 220 + b.phase) * style.flutter;
       b.x += b.vx; b.y += b.vy; b.rot += b.spin;
       ctx.save();
       ctx.translate(b.x, b.y);
-      ctx.rotate(b.rot);
-      ctx.scale(1, Math.cos(b.rot * 2));  // tumbling
-      ctx.fillStyle = b.color;
-      ctx.fillRect(-b.w / 2, -b.h / 2, b.w, b.h);
+      style.draw(ctx, b);
       ctx.restore();
     }
     if (age < length) requestAnimationFrame(frame);

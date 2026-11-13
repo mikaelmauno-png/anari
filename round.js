@@ -116,14 +116,20 @@ function nightWinners(league, stats, night) {
   return new Set(top > 0 ? scores.filter(([, s]) => s === top).map(([m]) => m) : []);
 }
 
-function standingsGainLeaders(league, stats, night) {
+// Fantasy points each manager gained on this night: standings now minus
+// standings with the night's stat lines taken away. Map manager -> points.
+function nightGains(league, stats, night) {
   const sk = new Map(night.skaters.map(s => [s.id, s]));
   const go = new Map(night.goalies.map(g => [g.id, g]));
   const before = { ...stats,
     skaters: stats.skaters.map(s => { const l = sk.get(s.id); return l ? { ...s, g: s.g - l.g, p: s.p - l.p, pim: s.pim - l.pim } : { ...s }; }),
     goalies: stats.goalies.map(g => { const l = go.get(g.id); return l && l.gsax != null ? { ...g, gsax: g.gsax - l.gsax } : { ...g }; }) };
   const then = new Map(computeStandings(league, before).table.map(r => [r.manager, r.total]));
-  const gains = computeStandings(league, stats).table.map(r => [r.manager, r.total - then.get(r.manager)]);
+  return new Map(computeStandings(league, stats).table.map(r => [r.manager, r.total - then.get(r.manager)]));
+}
+
+function standingsGainLeaders(league, stats, night) {
+  const gains = [...nightGains(league, stats, night)];
   const top = Math.max(...gains.map(([, d]) => d));
   return new Set(top > 0 ? gains.filter(([, d]) => d === top).map(([m]) => m) : []);
 }
@@ -220,7 +226,33 @@ function renderChange(el, league, from, to) {
 // Tap (or Enter/Space) turns a card; "Turn all" turns every card face up
 let ctxLeague = null;
 
-function setupFlips(nightDate, reveal) {
+// A card that shows a gain reacts in the theme's own way when it's turned.
+// "Your" card only, when Settings says who you are; otherwise any card with a gain.
+// Motion is switched off in CSS for devices that ask for reduced motion.
+function themedReaction(card, gain) {
+  const theme = document.documentElement.dataset.theme;
+  if (theme === "light" || theme === "vaporwave") {
+    // Light: red goal lamp behind the card. Vaporwave: the card's text flickers on like neon.
+    card.classList.add("gain-now");
+  } else if (theme === "aurora") {
+    // The aurora at the top of the screen surges brighter for a few seconds
+    const surge = document.createElement("div");
+    surge.className = "aurora-surge";
+    surge.setAttribute("aria-hidden", "true");
+    document.body.append(surge);
+    surge.addEventListener("animationend", () => surge.remove());
+  } else if (theme === "newspaper") {
+    // A tilted stamp lands on the card and stays there
+    const stamp = document.createElement("span");
+    stamp.className = "stamp";
+    stamp.textContent = `Extra! +${gain}`;
+    card.querySelector(".face-up").append(stamp);
+    card.classList.add("stamped");
+  }
+  // Dark and High contrast: no reaction, on purpose
+}
+
+function setupFlips(nightDate, reveal, gains) {
   const night = document.getElementById("night");
   // Cards already turned show without the animation; later taps animate
   requestAnimationFrame(() => requestAnimationFrame(() => night.querySelector(".no-anim")?.classList.remove("no-anim")));
@@ -229,6 +261,9 @@ function setupFlips(nightDate, reveal) {
     // Only a card turned now gets the day's extras, not ones turned earlier
     el.classList.add("open", "turned-now");
     if (el.classList.contains("win")) setTimeout(() => celebrate(el), 550);
+    // Themed reaction once the card has finished turning (0.55 s)
+    const m = el.dataset.m, gain = gains.get(m) || 0;
+    if (gain > 0 && (!me() || m === me())) setTimeout(() => themedReaction(el, gain), 550);
     el.setAttribute("aria-expanded", "true");
     const seen = readStore(FLIPPED_KEY, {});
     const list = seen.date === nightDate ? seen.managers || [] : [];
@@ -262,7 +297,7 @@ async function main() {
     ctxLeague = league;
     const reveal = revealStyle(night.date);
     renderNight(league, stats, night, reveal);
-    setupFlips(night.date, reveal);
+    setupFlips(night.date, reveal, nightGains(league, stats, night));
     // Spoiler-free: the scores and this week's changes give last night away
     spoilerGate(league, [document.getElementById("scores-block"), document.getElementById("week-title"),
       document.getElementById("week")], night.date);
