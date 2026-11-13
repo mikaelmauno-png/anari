@@ -26,7 +26,7 @@
 :root[data-theme="vaporwave"] {
   color-scheme: dark;
   --bg: #0b0814; --card: #110c1d; --text: #ece8f6; --muted: #9a8fc0; --line: #221a33;
-  --accent: #2ee6e6; --accent-soft: #10222a; --warn: #ffb347; --gold: #ffc857;
+  --accent: #a46bff; --accent-soft: #1c1430; --warn: #ffb347; --gold: #ffc857;
   --s1: #2ee6e6; --s2: #ff9f43; --s3: #ff3d7f; --s4: #8088ff;
   --up: #3df5c8; --down: #ff3d7f;
   --sunset: linear-gradient(90deg, #ff9f43, #ff3d7f 50%, #a46bff);
@@ -55,8 +55,14 @@
   border-image: linear-gradient(90deg, #ff9f43, #ff3d7f, #8088ff) 1;
   color: var(--text); font-size: 18px; font-weight: 600; text-transform: none; letter-spacing: 0;
 }
-/* Neon glow on the numbers that matter */
-:root[data-theme="vaporwave"] :is(.total, li.scored .pts) { text-shadow: 0 0 10px rgb(46 230 230 / 0.55); }
+/* Each manager's totals and category points glow in their own color
+   (--mc is set on the row by mcStyle() in score.js; violet accent if missing) */
+:root[data-theme="vaporwave"] :is(.total, li.scored .pts) {
+  color: var(--mc, var(--accent));
+  text-shadow: 0 0 10px color-mix(in srgb, var(--mc, var(--accent)) 55%, transparent);
+}
+/* Your own row: a faint wash of your color instead of the shared accent */
+:root[data-theme="vaporwave"] :is(tr.me > *, ol.rank li.me) { background: color-mix(in srgb, var(--mc, var(--accent)) 12%, var(--card)); }
 :root[data-theme="vaporwave"] tbody tr:first-child .place { text-shadow: 0 0 8px rgb(255 200 87 / 0.6); }
 /* Chart lines glow softly in their own color */
 :root[data-theme="vaporwave"] .plot polyline { filter: drop-shadow(0 0 3px rgb(255 255 255 / 0.18)); }

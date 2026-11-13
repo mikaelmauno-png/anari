@@ -201,7 +201,7 @@ function renderChange(el, league, from, to) {
       return d && b ? `<span class="chip ${d > 0 ? "up" : "down"}">${SHORT[c.key]} ${d > 0 ? "+" : "−"}${Math.abs(d)}</span>` : "";
     }).join("");
     return `
-      <tr class="${b ? "has-moves" : ""}${meClass(r.manager)}">
+      <tr class="${b ? "has-moves" : ""}${meClass(r.manager)}"${mcStyle(league, r.manager)}>
         <td class="place">${r.place}</td>
         <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, r.manager)}"></span>${esc(r.manager)}</th>
         <td>${b ? start : "–"}</td>

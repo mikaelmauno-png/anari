@@ -23,7 +23,7 @@ function render(league, stats) {
     <div class="scroll"><table class="standings fixed${over ? " tight" : ""}">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th class="tot">Total</th>${over ? `<th class="po" title="Playoff picks, 2 per team that made it">PO</th>` : ""}${head}</tr></thead>
       <tbody>${rows.map(r => `
-        <tr class="${meClass(r.manager)}">
+        <tr class="${meClass(r.manager)}"${mcStyle(league, r.manager)}>
           <td class="place">${r.place}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.total}</td>
@@ -38,7 +38,7 @@ function render(league, stats) {
       <h3>${esc(cat.label)}${cat.source ? ` <span class="src">${cat.source}</span>` : ""}</h3>
       <ol class="rank">
         ${entries.map(e => `
-          <li class="${e.points ? "scored" : ""}${meClass(e.manager)}">
+          <li class="${e.points ? "scored" : ""}${meClass(e.manager)}"${mcStyle(league, e.manager)}>
             <span class="pl">${e.tied ? "T" : ""}${e.place}</span>
             <span class="who"><b>${esc(e.manager)}</b><span class="pick">${pickLabel(cat, e)}</span>
               ${e.gap ? `<span class="gap">${e.gap}</span>` : ""}
@@ -103,7 +103,7 @@ function renderProjection(league, stats) {
     <div class="scroll"><table class="standings fixed tight">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th class="tot">Total</th><th class="po" title="Playoff picks, 2 per team in">PO</th>${head}</tr></thead>
       <tbody>${rows.map(r => `
-        <tr class="${meClass(r.manager)}">
+        <tr class="${meClass(r.manager)}"${mcStyle(league, r.manager)}>
           <td class="place">${place(r)}</td>
           <th scope="row" class="mgr">${esc(r.manager)}</th>
           <td class="total">${r.final}</td>

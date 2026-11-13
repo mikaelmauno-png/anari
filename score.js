@@ -453,6 +453,10 @@ function celebrate(from) {
 // league.json, so a manager keeps the same color on every page.
 const SERIES = ["var(--s1)", "var(--s2)", "var(--s3)", "var(--s4)"];
 const managerColor = (league, m) => SERIES[league.managers.indexOf(m) % SERIES.length];
+// The manager's color as a CSS variable (--mc) on their row, so a theme can tint
+// that manager's numbers (Vaporwave colors each total in its manager's color).
+// Empty for a name not in this league, so the theme falls back to its accent.
+const mcStyle = (league, m) => league.managers.includes(m) ? ` style="--mc:${managerColor(league, m)}"` : "";
 
 const seasonLabel = season => `${String(season).slice(0, 4)}–${String(season).slice(6)}`;
 const fmtDay = (iso, opts = { weekday: "short", day: "numeric", month: "short" }) =>

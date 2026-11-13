@@ -56,7 +56,7 @@ function render(league, stats) {
     <div class="scroll"><table class="standings">
       <thead><tr><th>#</th><th class="mgr">Manager</th><th>East</th><th>West</th><th>Correct</th><th>Points</th></tr></thead>
       <tbody>${ranked.map(s => `
-        <tr class="${meClass(s.manager)}">
+        <tr class="${meClass(s.manager)}"${mcStyle(league, s.manager)}>
           <td class="place">${1 + ranked.filter(o => o.points > s.points).length}</td>
           <th scope="row" class="mgr"><span class="swatch" style="background:${managerColor(league, s.manager)}"></span>${esc(s.manager)}</th>
           ${CONFS.map(([c]) => `<td>${s.teams.filter(t => t.conf === c && t.inPlayoffs).length}/${s.teams.filter(t => t.conf === c).length}</td>`).join("")}
