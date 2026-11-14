@@ -23,6 +23,27 @@
     ul.scores { list-style: none; margin: 0; display: grid; gap: 6px 24px; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); font-variant-numeric: tabular-nums; }
     ul.scores li { display: flex; gap: 6px; align-items: baseline; }
     ul.scores .win { font-weight: 700; }
+    /* Game dropdowns: an open game takes the whole row of the grid */
+    ul.scores li.game { display: block; }
+    ul.scores li.game:has(details[open]) { grid-column: 1 / -1; }
+    ul.scores summary { display: flex; gap: 6px; align-items: baseline; cursor: pointer; list-style: none; }
+    ul.scores summary::-webkit-details-marker { display: none; }
+    /* Small arrow: points right when closed, down when the game is open */
+    ul.scores summary::after { content: "▸"; color: var(--muted); font-size: 12px; }
+    ul.scores details[open] summary::after { content: "▾"; }
+    .game-details { margin: 8px 0 4px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .linescore { overflow-x: auto; margin-bottom: 10px; }
+    .linescore table { width: auto; }
+    .linescore th, .linescore td { padding: 3px 10px; }
+    .linescore tbody th { text-align: left; }
+    .linescore .t { font-weight: 700; }
+    .linescore .sog { color: var(--muted); border-left: 1px solid var(--line); }
+    .box-teams { display: grid; gap: 4px 24px; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+    .box-teams h4 { margin: 4px 0; font-size: 13px; color: var(--muted); }
+    ul.box { list-style: none; margin: 0; padding: 0; font-size: 14px; }
+    ul.box li { display: flex; justify-content: space-between; gap: 12px; padding: 3px 0; }
+    ul.box .val { white-space: nowrap; }
+    .pick-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin: 0 4px 0 6px; vertical-align: 1px; }
     tr.has-moves > * { border-bottom: 0; padding-bottom: 2px; }
     tr.moves td { text-align: left; white-space: normal; padding-top: 0; }
     .chip { display: inline-block; font-size: 12px; font-weight: 600; padding: 1px 6px; margin: 1px 2px; border-radius: 6px; border: 1px solid currentColor; }

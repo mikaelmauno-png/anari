@@ -134,6 +134,67 @@ function standingsGainLeaders(league, stats, night) {
   return new Set(top > 0 ? gains.filter(([, d]) => d === top).map(([m]) => m) : []);
 }
 
+// Which managers picked each player, for marking picks in the game dropdowns.
+// Map player id -> [{ manager, cat: "G" }, ...]. Team picks (Presidents') aren't marked.
+function pickedBy(league, stats) {
+  const map = new Map();
+  for (const cat of CATEGORIES.filter(c => c.kind !== "team")) {
+    const pool = cat.kind === "goalie" ? stats.goalies : stats.skaters;
+    for (const m of league.managers) {
+      for (const pick of (league.picks[cat.key] || {})[m] || []) {
+        const { item } = resolve(pick, pool, cat.kind, cat.check);
+        if (!item) continue;
+        if (!map.has(item.id)) map.set(item.id, []);
+        map.get(item.id).push({ manager: m, cat: SHORT[cat.key] });
+      }
+    }
+  }
+  return map;
+}
+
+// Colored dot per manager who picked the player, plus the categories: "● G · FIN"
+function pickMarks(league, picks, id) {
+  const list = picks.get(id);
+  if (!list) return "";
+  const managers = [...new Set(list.map(p => p.manager))];
+  const dots = managers.map(m => `<span class="pick-dot" style="background:${managerColor(league, m)}" title="${esc(m)}"></span>`).join("");
+  return ` ${dots}<small>${list.map(p => esc(p.cat)).join(" · ")}</small>`;
+}
+
+// The inside of a game's dropdown: score by period with shots on goal, then
+// each team's skaters who got a point or penalty minutes and its goalies.
+// Older data files have no periods or shots; then only the player lines show.
+function gameDetails(league, night, picks, g) {
+  let table = "";
+  if (g.periods || g.sog) {
+    const periods = g.periods || [];
+    const total = side => g[side].score;
+    const row = side => `<tr><th scope="row">${esc(g[side].abbrev)}</th>
+      ${periods.map(p => `<td>${p[side]}</td>`).join("")}
+      <td class="t">${total(side)}</td>
+      ${g.sog && g.sog[side] != null ? `<td class="sog">${g.sog[side]}</td>` : ""}</tr>`;
+    table = `<div class="linescore"><table>
+      <thead><tr><th></th>${periods.map(p => `<th>${esc(p.label)}</th>`).join("")}<th>T</th>
+        ${g.sog && g.sog.away != null ? `<th title="Shots on goal">SOG</th>` : ""}</tr></thead>
+      <tbody>${row("away")}${row("home")}</tbody></table></div>`;
+  }
+
+  const team = side => {
+    const abbrev = g[side].abbrev;
+    // Skaters who did something worth showing, best first
+    const sk = night.skaters.filter(s => s.team === abbrev && (s.p > 0 || s.pim > 0))
+      .sort((a, b) => b.p - a.p || b.g - a.g || b.pim - a.pim);
+    const gl = night.goalies.filter(x => x.team === abbrev);
+    const stat = s => [s.g && `${s.g} G`, s.a && `${s.a} A`, s.pim && `${s.pim} PIM`].filter(Boolean).join(" ");
+    const lines = [
+      ...sk.map(s => `<li><span>${esc(s.name)}${pickMarks(league, picks, s.id)}</span><span class="val">${stat(s)}</span></li>`),
+      ...gl.map(x => `<li><span>${esc(x.name)}${pickMarks(league, picks, x.id)}</span><span class="val">${x.sv}/${x.sa} saves</span></li>`),
+    ];
+    return `<div><h4>${esc(abbrev)}</h4>${lines.length ? `<ul class="box">${lines.join("")}</ul>` : `<p class="muted">No points.</p>`}</div>`;
+  };
+  return `${table}<div class="box-teams">${team("away")}${team("home")}</div>`;
+}
+
 function renderNight(league, stats, night, reveal) {
   const revealAll = getSettings().cards === "revealed";
   const winners = reveal === "winner" ? nightWinners(league, stats, night) : new Set();
@@ -164,16 +225,18 @@ function renderNight(league, stats, night, reveal) {
       </div>`;
   }).join("");
 
+  const picks = pickedBy(league, stats);
   const games = night.games.map(g => {
     const st = gameStateOf(g);
     if (st === "upcoming") return `<li class="muted">${esc(g.away.abbrev)} – ${esc(g.home.abbrev)} <small>${esc(liveLabel(g))}</small></li>`;
     const awayWon = st === "final" && g.away.score > g.home.score;
     const homeWon = st === "final" && g.home.score > g.away.score;
-    return `<li>
+    return `<li class="game"><details><summary>
       <span class="${awayWon ? "win" : ""}">${esc(g.away.abbrev)} ${g.away.score}</span>
       <span class="muted">–</span>
       <span class="${homeWon ? "win" : ""}">${g.home.score} ${esc(g.home.abbrev)}</span>
-      ${st === "live" ? `<span class="live-badge">${esc(liveLabel(g))}</span>` : g.ending !== "REG" ? `<small>${esc(g.ending)}</small>` : ""}</li>`;
+      ${st === "live" ? `<span class="live-badge">${esc(liveLabel(g))}</span>` : g.ending !== "REG" ? `<small>${esc(g.ending)}</small>` : ""}</summary>
+      <div class="game-details">${gameDetails(league, night, picks, g)}</div></details></li>`;
   }).join("");
   const unfinished = night.games.filter(g => gameStateOf(g) !== "final");
   const live = unfinished.filter(g => gameStateOf(g) === "live").length;
@@ -190,7 +253,7 @@ function renderNight(league, stats, night, reveal) {
     ${status}
     ${revealAll || turned.size === league.managers.length ? "" : `<p class="flip-all"><button type="button" id="turn-all">Turn all</button></p>`}
     <div class="grid no-anim reveal-${reveal}">${managers}</div>
-    <div id="scores-block"><h3 class="sub">Scores</h3>
+    <div id="scores-block"><h3 class="sub">Scores <small>· tap a game for details</small></h3>
     <ul class="scores card">${games}</ul></div>`;
 }
 

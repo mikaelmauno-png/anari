@@ -272,6 +272,8 @@ def boxscore_lines(game):
     """Per-player lines from the NHL box score; works while a game is live."""
     box = json.loads(get(f"{WEB_API}/gamecenter/{game['id']}/boxscore"))
     skaters, goalies = [], []
+    # Team shots on goal, e.g. {"away": 31, "home": 28}; None if the box score lacks them
+    sog = {"away": box.get("awayTeam", {}).get("sog"), "home": box.get("homeTeam", {}).get("sog")}
     for side in ("awayTeam", "homeTeam"):
         team = box[side]["abbrev"]
         players = box.get("playerByGameStats", {}).get(side, {})
@@ -284,7 +286,54 @@ def boxscore_lines(game):
                 continue  # dressed but didn't play
             goalies.append({"id": p["playerId"], "name": p["name"]["default"], "team": team,
                             "sa": p.get("shotsAgainst", 0), "sv": p.get("saves", 0), "ga": p.get("goalsAgainst", 0)})
-    return skaters, goalies
+    return skaters, goalies, sog
+
+
+def period_scores(g):
+    """Goals per period for one scoreboard game, e.g.
+    [{"label": "1", "away": 1, "home": 0}, ..., {"label": "OT", "away": 0, "home": 1}].
+
+    The scoreboard lists every goal with the score right after it, so each goal
+    is credited to whichever side's score went up. A shootout counts as one goal
+    for the winner (that's how the final score shows it). Returns None when the
+    goals don't add up to the score shown, rather than showing wrong numbers."""
+    goals = g.get("goals")
+    if goals is None:
+        return None
+    periods = {}   # period number -> {"label", "away", "home"}, in order
+    # Regulation periods always show, even goalless ones (and while live, the
+    # ones played so far)
+    played = (g.get("periodDescriptor") or {}).get("number") or 0
+    for n in range(1, min(played, 3) + 1):
+        periods[n] = {"label": str(n), "away": 0, "home": 0}
+    away = home = 0
+    for goal in goals:
+        pd = goal.get("periodDescriptor") or {}
+        kind = pd.get("periodType", "REG")
+        if kind == "SO":
+            continue  # shootout goals are handled below
+        n = pd.get("number") or goal.get("period")
+        if n is None:
+            return None
+        # OT periods: "OT" in the regular season (one OT), "2OT", "3OT" if ever needed
+        label = str(n) if kind == "REG" else ("OT" if n == 4 else f"{n - 3}OT")
+        row = periods.setdefault(n, {"label": label, "away": 0, "home": 0})
+        a, h = goal.get("awayScore"), goal.get("homeScore")
+        if a is None or h is None:
+            return None
+        if a > away:
+            row["away"] += 1
+        elif h > home:
+            row["home"] += 1
+        away, home = a, h
+    out = [periods[n] for n in sorted(periods)]
+    final_away, final_home = g["awayTeam"].get("score"), g["homeTeam"].get("score")
+    if (g.get("gameOutcome") or {}).get("lastPeriodType") == "SO" and final_away is not None:
+        out.append({"label": "SO", "away": final_away - away, "home": final_home - home})
+        away, home = final_away, final_home
+    if (away, home) != (final_away, final_home):
+        return None
+    return out
 
 
 def write_last_night(f):
@@ -297,9 +346,10 @@ def write_last_night(f):
         return  # every game final and every GSAx in already
 
     skaters, goalies = [], []
+    sog = {}   # game id -> {"away": shots, "home": shots}
     for g in games:
         if game_state(g) != "upcoming":
-            sk, gl = boxscore_lines(g)
+            sk, gl, sog[g["id"]] = boxscore_lines(g)
             final = game_state(g) == "final"
             skaters += [dict(x, final=final) for x in sk]
             goalies += [dict(x, final=final) for x in gl]
@@ -329,6 +379,9 @@ def write_last_night(f):
             "periodType": pd.get("periodType"),
             "clock": (g.get("clock") or {}).get("timeRemaining"),
             "ending": (g.get("gameOutcome") or {}).get("lastPeriodType", "REG"),
+            # Shown in the game's dropdown on Last round; missing for games not started
+            "sog": sog.get(g["id"]),
+            "periods": period_scores(g) if game_state(g) != "upcoming" else None,
         })
     complete = all(x["state"] == "final" for x in out_games) and all(x["gsax"] is not None for x in goalies)
     write_json(path, {
