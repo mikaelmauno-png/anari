@@ -88,10 +88,34 @@ def date_filter(start=None, end=None):
     return expr
 
 
+STATS_PAGE = 100  # the stats API returns at most this many rows per request
+
+
 def stats_rest(kind, report, season, extra=""):
+    """All rows of a stats API report. The API used to accept limit=-1 for
+    "everything", but since Nov 2026 it silently stops at the first 100 rows,
+    so ask for one page at a time until the reported total is reached."""
     expr = f"seasonId={season} and gameTypeId=2" + extra
-    q = urllib.parse.urlencode({"limit": -1, "cayenneExp": expr})
-    return json.loads(get(f"{STATS_API}/{kind}/{report}?{q}"))["data"]
+    # A fixed sort order, so rows don't shift between pages and get skipped or repeated
+    sort = json.dumps([{"property": "playerId", "direction": "ASC"}])
+    rows = []
+    while True:
+        q = urllib.parse.urlencode({"start": len(rows), "limit": STATS_PAGE,
+                                    "sort": sort, "cayenneExp": expr})
+        page = json.loads(get(f"{STATS_API}/{kind}/{report}?{q}"))
+        rows += page["data"]
+        total = page.get("total")
+        # Stop at the reported total, or (if the API leaves total out) at a short page
+        if not page["data"] or (total is not None and len(rows) >= total) \
+                or (total is None and len(page["data"]) < STATS_PAGE):
+            break
+    # Safety net: a page that overlapped the previous one would list a player twice
+    seen, unique = set(), []
+    for r in rows:
+        if r.get("playerId") not in seen or r.get("playerId") is None:
+            seen.add(r.get("playerId"))
+            unique.append(r)
+    return unique
 
 
 def last_team(s):
