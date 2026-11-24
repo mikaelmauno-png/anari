@@ -105,6 +105,42 @@ function renderDays(league, days, now) {
       (days without games too). Ties count for everyone tied.</p>`;
 }
 
+// Record highest and lowest total by any manager, over the daily standings
+// from `from` (the first Sunday snapshot) on, plus the live standings. The
+// opening days are left out: with nearly every category still tied, the
+// shared points give everyone inflated totals.
+function renderRecords(league, days, nowTable, from) {
+  const counted = days.filter(d => d.date >= from);
+  const totals = [...counted, { table: nowTable }].flatMap(d => d.table.map(r => r.total));
+  const day = iso => fmtDay(iso, { day: "numeric", month: "short" });
+
+  // Who reached the record, and the day each stretch at it began
+  // ("now" when a manager is at it in the live standings)
+  const holders = value => league.managers.map(m => {
+    const starts = [];
+    let prev = false;  // was this manager at the record the day before?
+    for (const d of counted) {
+      const at = d.table.find(r => r.manager === m)?.total === value;
+      if (at && !prev) starts.push(day(d.date));
+      prev = at;
+    }
+    if (nowTable.find(r => r.manager === m)?.total === value) starts.push(`<span class="now">now</span>`);
+    return { m, starts };
+  }).filter(h => h.starts.length);
+
+  const tile = (cls, label, value) => `
+    <div class="record ${cls}">
+      <div class="label">${label}</div>
+      <div class="value">${value}</div>
+      ${holders(value).map(h => `<div class="who"><span class="swatch" style="background:${managerColor(league, h.m)}"></span>${esc(h.m)}
+        <span class="muted">${h.starts.join(", ")}</span></div>`).join("")}
+    </div>`;
+  document.getElementById("records").innerHTML = `
+    <div class="card records">${tile("high", "Highest total", Math.max(...totals))}${tile("low", "Lowest total", Math.min(...totals))}</div>
+    <p class="hint">Any manager's total after any day from ${day(from)} on, with the day each stretch at the record began.
+      The opening days are left out: with almost every category still tied, everyone's totals were inflated.</p>`;
+}
+
 // Standings after every day: the current stats with each day's totals put in.
 // The daily file lists only what changed each day, so totals carry forward.
 function dailyEnds(league, daily, now) {
@@ -118,7 +154,8 @@ function dailyEnds(league, daily, now) {
     for (const [id, [g, p, pim]] of Object.entries(d.s)) { const s = sk.get(id); if (s) Object.assign(s, { g, p, pim }); }
     for (const [id, gsax] of Object.entries(d.g)) { const g = gk.get(id); if (g) g.gsax = gsax; }
     for (const [ab, [rank, pts]] of Object.entries(d.t)) { const t = tm.get(ab); if (t) Object.assign(t, { rank, pts }); }
-    return { date: d.date, ...ends(computeStandings(league, st).table) };
+    const { table } = computeStandings(league, st);
+    return { date: d.date, table, ...ends(table) };
   });
 }
 
@@ -174,9 +211,15 @@ async function main() {
     renderCategoryTrend(league, points);
     try {
       const daily = await loadJSON("data/history/daily.json");
-      if (daily.days.length) renderDays(league, dailyEnds(league, daily, now), ends(computeStandings(league, now).table));
+      if (daily.days.length) {
+        const days = dailyEnds(league, daily, now);
+        const nowTable = computeStandings(league, now).table;
+        renderDays(league, days, ends(nowTable));
+        renderRecords(league, days, nowTable, index[0]);
+      }
     } catch {
       document.getElementById("days").innerHTML = `<p class="muted">No daily standings yet.</p>`;
+      document.getElementById("records").innerHTML = `<p class="muted">No daily standings yet.</p>`;
     }
     document.getElementById("cat-controls").addEventListener("change", e => {
       if (e.target.id !== "cat-select") return;

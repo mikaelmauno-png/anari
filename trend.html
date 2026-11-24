@@ -25,6 +25,14 @@
       table.days .lead .bar { background: var(--up); }
       table.days .low .bar { background: var(--down); }
       table.days .now { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; margin-left: 6px; }
+      /* Records: highest and lowest total side by side */
+      .records { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+      .record .label { font-size: 13px; color: var(--muted); }
+      .record .value { font-size: 32px; font-weight: 700; line-height: 1.2; }
+      .record.high .value { color: var(--up); }
+      .record.low .value { color: var(--down); }
+      .record .who { font-size: 14px; margin-top: 4px; }
+      .record .now { font-size: 11px; font-weight: 600; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 0 5px; }
       @media (max-width: 560px) {
         table.weeks th, table.weeks td { padding: 8px 2px; font-size: 14px; }
         table.weeks thead th { font-size: 11px; overflow: hidden; text-overflow: ellipsis; }
@@ -46,6 +54,9 @@
 
     <h2>Points above or below average</h2>
     <div id="chart" class="card"></div>
+
+    <h2>Records</h2>
+    <div id="records"></div>
 
     <h2>Days on top and at the bottom</h2>
     <div id="days"></div>
