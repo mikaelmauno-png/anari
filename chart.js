@@ -152,7 +152,12 @@ function drawChart(el, xs, series, opts) {
   const hit = el.querySelector(".hit");
   hit.addEventListener("pointermove", show);
   hit.addEventListener("pointerdown", show);
-  hit.addEventListener("pointerleave", hide);
+  // A mouse leaving the chart clears it; a finger lifting (which also fires pointerleave) keeps the
+  // selection until the next tap somewhere else on the page
+  hit.addEventListener("pointerleave", e => { if (e.pointerType === "mouse") hide(); });
+  if (el._outsideTap) document.removeEventListener("pointerdown", el._outsideTap);
+  el._outsideTap = e => { if (!svg.contains(e.target)) hide(); };
+  document.addEventListener("pointerdown", el._outsideTap);
 }
 
 const shortDay = d => fmtDay(d, { day: "numeric", month: "short" });
